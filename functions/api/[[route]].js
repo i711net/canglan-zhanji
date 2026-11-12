@@ -173,6 +173,7 @@ async function forgot(db, env, request) {
     .bind(email, user ? await sha256(code + '|' + email) : '-', now + CODE_MINUTES * 60000, now, sameDay ? old.day_count + 1 : 1)
     .run();
   if (!user) return json(okMsg);
+  // 注意：这里出错一律用 500 回复并写明原因。不能用 502，Cloudflare 会把 502 的内容换成它自己的错误页，玩家就只看到「请求失败（502）」
   let r;
   try {
     r = await fetch(env.MAIL_URL, {
@@ -181,9 +182,14 @@ async function forgot(db, env, request) {
       body: JSON.stringify({ to: email, code, minutes: CODE_MINUTES }),
     });
   } catch (e) {
-    return json({ error: '发信服务连不上，请稍后再试' }, 502);
+    return json({ error: '发信脚本连不上（检查 MAIL_URL 填的网址）：' + (e && e.message ? e.message : e) }, 500);
   }
-  if (!r.ok) return json({ error: '发信失败（' + r.status + '），请稍后再试' }, 502);
+  if (!r.ok) {
+    let why = '';
+    try { why = (await r.text()).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80); } catch {}
+    const hint = { 404: '网址上没有这个脚本，检查 MAIL_URL 和上传的位置', 403: '密钥对不上，检查 MAIL_KEY 和脚本里的 $KEY 是否完全一样', 500: '脚本报错：密钥还没改，或主机发信失败', 429: '发得太多，被脚本限流了' }[r.status] || '';
+    return json({ error: `发信失败：发信脚本返回 ${r.status}${hint ? '（' + hint + '）' : ''}${why ? ' ' + why : ''}` }, 500);
+  }
   return json(okMsg);
 }
 
