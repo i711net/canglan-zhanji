@@ -6,7 +6,7 @@
    ========================================================= */
 
 const API = '/api';
-const VERSION = '20261112c'; // 每次更新改这里和 index.html 里的 ?v=，手机就会加载新版
+const VERSION = '20261112d'; // 每次更新改这里和 index.html 里的 ?v=，手机就会加载新版
 const $ = (s) => document.querySelector(s);
 const rand = (a, b) => a + Math.random() * (b - a);
 const ri = (a, b) => Math.floor(rand(a, b + 1));
@@ -1390,7 +1390,7 @@ function tabBar(panel, tabs) {
 }
 function openPanel(id) {
   panelId = id;
-  G.paused = true;
+  G.paused = id === 'cls' || id === 'settings'; // 只有选职业和设置会暂停；背包、角色等面板开着时游戏照常进行
   G.atkHeld = false;
   $('#panel').classList.remove('hidden');
   $('#pClose').classList.toggle('hidden', id === 'cls');
