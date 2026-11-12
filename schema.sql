@@ -18,3 +18,11 @@ CREATE TABLE IF NOT EXISTS saves (
   updated_at INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
+CREATE TABLE IF NOT EXISTS resets (
+  email TEXT PRIMARY KEY,
+  code_hash TEXT NOT NULL,
+  expires_at INTEGER NOT NULL,
+  tries INTEGER NOT NULL,
+  sent_at INTEGER NOT NULL,
+  day_count INTEGER NOT NULL
+);

@@ -9,7 +9,7 @@
 <title>苍岚战纪</title>
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚔️</text></svg>" />
-<link rel="stylesheet" href="style.css?v=20261112d" />
+<link rel="stylesheet" href="style.css?v=20261112e" />
 </head>
 <body>
   <!-- 登录 / 注册 -->
@@ -26,8 +26,13 @@
         <input id="fEmail" type="email" placeholder="邮箱" autocomplete="email" required />
         <input id="fPass" type="password" placeholder="密码（至少 6 位）" autocomplete="current-password" required minlength="6" />
         <input id="fNick" type="text" placeholder="角色昵称（最多 12 字）" maxlength="12" class="hidden" />
+        <div id="fCodeRow" class="code-row hidden">
+          <input id="fCode" type="text" inputmode="numeric" maxlength="6" placeholder="6 位验证码" autocomplete="one-time-code" />
+          <button type="button" id="sendCodeBtn" class="btn">发送验证码</button>
+        </div>
         <button type="submit" id="authBtn" class="btn primary big">登录并开始</button>
       </form>
+      <a href="#" id="forgotLink" class="forgot">忘记密码？</a>
       <div id="authMsg" class="msg"></div>
       <p class="hint">游戏进度会实时保存到云端，换手机登录同一个邮箱就能接着玩。</p>
     </div>
@@ -86,6 +91,6 @@
     </div>
   </div>
 
-  <script src="game.js?v=20261112d"></script>
+  <script src="game.js?v=20261112e"></script>
 </body>
 </html>

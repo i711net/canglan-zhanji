@@ -67,6 +67,7 @@ public/                 ← 网页（静态文件）
   icon.svg
 functions/api/[[route]].js  ← 后端：注册、登录、云存档（和晨曦村物语完全一样）
 schema.sql              ← 数据表（可选，后端会自动建表）
+hosting/cl-mail.php     ← 发验证码邮件的脚本，放到 StartHost 主机上（不是放 Cloudflare）
 ```
 
 ## 部署到 Cloudflare Pages
@@ -85,6 +86,36 @@ schema.sql              ← 数据表（可选，后端会自动建表）
 ```bash
 npx wrangler pages dev public --d1 DB=local-db
 ```
+
+## 找回密码（邮件验证码）
+
+登录页点「忘记密码？」→ 填邮箱 → 发送验证码 → 输入 6 位数字和新密码。验证码 10 分钟有效，最多试错 5 次；同一邮箱 60 秒内只能发一次、一天最多 5 次。重设后其他设备上的登录全部失效。
+
+邮件由 StartHost 主机代发（Cloudflare 后端带密钥调用主机上的一个 PHP 小脚本）。主机面板里已经建好只发不收的邮箱 `noreply@991828.xyz`，并给 `991828.xyz` 开了 DKIM（选择器 `s1`）。还要做三件事：
+
+**1. 在 Cloudflare 的 `991828.xyz` DNS 里加 3 条 TXT 记录**（代理状态选「仅 DNS」）
+
+| 名称 | 内容 |
+|---|---|
+| `@` | `v=spf1 include:spf.stackmail.com a mx -all`（如果已经有一条 `v=spf1` 开头的记录，不要新建，把 `include:spf.stackmail.com` 加进原来那条） |
+| `s1._domainkey` | 主机面板 → Email → Domainkeys (DKIM) → 991828.xyz 那行的 Options → DNS，把 DNS Value 整段复制过来 |
+| `_dmarc` | `v=DMARC1; p=none` |
+
+DKIM 那条必须加：面板提示过，域名不在他们的 DNS 上时，不加这条记录发出去的信会被拒收。
+
+**2. 上传发信脚本**
+
+把 `hosting/cl-mail.php` 第一行的 `$KEY = 'CHANGE_ME'` 改成你自己编的一长串随机字符（至少 32 位），用主机面板的 File Manager 传到某个网站目录，比如 `wuyu.991828.xyz` 的 `public_html`，网址就是 `https://wuyu.991828.xyz/cl-mail.php`。
+改过密钥的这个文件**不要传到 GitHub**。
+
+**3. 在 Cloudflare Pages 项目里加两个变量**（设置 → 变量和机密），加完重新部署一次
+
+| 变量名 | 值 |
+|---|---|
+| `MAIL_URL` | 上一步的网址，例如 `https://wuyu.991828.xyz/cl-mail.php` |
+| `MAIL_KEY` | 和 `$KEY` 一样的那串（类型选「机密」） |
+
+没配这两个变量时游戏照常能玩，只是点「发送验证码」会提示还没配置。
 
 ## 改数值
 
@@ -107,4 +138,4 @@ npx wrangler pages dev public --d1 DB=local-db
 
 - 这是单机游戏：红名恶徒是 AI，没有真人对战、行会、攻城。要做多人同屏得加实时服务器（Cloudflare Durable Objects），是另一个量级的工作。
 - 存档和晨曦村物语不通用（装备系统不同），本机缓存的键名也换成了 `cl_` 开头。
-- 密码使用 PBKDF2-SHA256（10 万次迭代）加盐保存，登录令牌 30 天有效，只存哈希。注册不发验证邮件，也没有“忘记密码”。
+- 密码使用 PBKDF2-SHA256（10 万次迭代）加盐保存，登录令牌 30 天有效，只存哈希。注册不发验证邮件；忘记密码用邮件验证码重设（见上面「找回密码」）。

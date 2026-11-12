@@ -6,7 +6,7 @@
    ========================================================= */
 
 const API = '/api';
-const VERSION = '20261112d'; // 每次更新改这里和 index.html 里的 ?v=，手机就会加载新版
+const VERSION = '20261112e'; // 每次更新改这里和 index.html 里的 ?v=，手机就会加载新版
 const $ = (s) => document.querySelector(s);
 const rand = (a, b) => a + Math.random() * (b - a);
 const ri = (a, b) => Math.floor(rand(a, b + 1));
@@ -543,17 +543,43 @@ addEventListener('pagehide', flushOnExit);
 document.addEventListener('visibilitychange', () => { if (document.hidden) flushOnExit(); });
 
 /* ===================== 登录界面 ===================== */
-let authMode = 'login';
-document.querySelectorAll('.tab').forEach((t) =>
-  t.addEventListener('click', () => {
-    authMode = t.dataset.tab;
-    document.querySelectorAll('.tab').forEach((x) => x.classList.toggle('active', x === t));
-    $('#fNick').classList.toggle('hidden', authMode !== 'register');
-    $('#authBtn').textContent = authMode === 'login' ? '登录并开始' : '注册并开始';
-    $('#fPass').autocomplete = authMode === 'login' ? 'current-password' : 'new-password';
-    $('#authMsg').textContent = '';
-  })
-);
+let authMode = 'login'; // login 登录 / register 注册 / reset 用邮件验证码重设密码
+function setAuthMode(m) {
+  authMode = m;
+  document.querySelectorAll('.tab').forEach((x) => x.classList.toggle('active', x.dataset.tab === m));
+  $('#fNick').classList.toggle('hidden', m !== 'register');
+  $('#fCodeRow').classList.toggle('hidden', m !== 'reset');
+  $('#fPass').placeholder = m === 'reset' ? '新密码（至少 6 位）' : '密码（至少 6 位）';
+  $('#fPass').autocomplete = m === 'login' ? 'current-password' : 'new-password';
+  $('#authBtn').textContent = { login: '登录并开始', register: '注册并开始', reset: '重设密码并登录' }[m];
+  $('#forgotLink').textContent = m === 'reset' ? '← 返回登录' : '忘记密码？';
+  $('#authMsg').className = 'msg';
+  $('#authMsg').textContent = m === 'reset' ? '填好邮箱，点「发送验证码」，再输入收到的 6 位数字和新密码' : '';
+}
+document.querySelectorAll('.tab').forEach((t) => t.addEventListener('click', () => setAuthMode(t.dataset.tab)));
+$('#forgotLink').addEventListener('click', (e) => { e.preventDefault(); setAuthMode(authMode === 'reset' ? 'login' : 'reset'); });
+// 发送验证码：60 秒内不能重复点
+$('#sendCodeBtn').addEventListener('click', async () => {
+  const btn = $('#sendCodeBtn'), msg = $('#authMsg');
+  const email = $('#fEmail').value.trim();
+  msg.className = 'msg';
+  if (!email) { msg.textContent = '先填邮箱'; return; }
+  btn.disabled = true;
+  try {
+    const r = await api('/forgot', { method: 'POST', body: JSON.stringify({ email }) });
+    msg.className = 'msg ok';
+    msg.textContent = r.message || '验证码已发送';
+    let left = 60;
+    const tick = () => {
+      btn.textContent = left > 0 ? left + ' 秒后可重发' : '发送验证码';
+      if (left-- > 0) setTimeout(tick, 1000); else btn.disabled = false;
+    };
+    tick();
+  } catch (err) {
+    msg.textContent = err.status === 404 || err.status === 405 ? '找不到后端接口，请确认已部署 functions 目录' : err.message;
+    btn.disabled = false;
+  }
+});
 $('#fEmail').value = Auth.email;
 $('#authForm').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -564,14 +590,17 @@ $('#authForm').addEventListener('submit', async (e) => {
   btn.disabled = true;
   try {
     const body = { email: $('#fEmail').value.trim(), password: $('#fPass').value, nickname: $('#fNick').value.trim() };
+    if (authMode === 'reset') body.code = $('#fCode').value.trim();
     const r = await api('/' + authMode, { method: 'POST', body: JSON.stringify(body) });
     Auth.token = r.token;
     Auth.email = r.email;
     localStorage.setItem('cl_token', r.token);
     localStorage.setItem('cl_email', r.email);
     msg.className = 'msg ok';
-    msg.textContent = '成功！正在进入游戏…';
+    msg.textContent = authMode === 'reset' ? '密码已重设！正在进入游戏…' : '成功！正在进入游戏…';
     await loadAndStart(r.nickname);
+    $('#fPass').value = ''; $('#fCode').value = '';
+    if (authMode === 'reset') setAuthMode('login');
   } catch (err) {
     msg.textContent = err.status === 404 || err.status === 405 ? '找不到后端接口，请确认已部署 functions 目录并绑定 D1' : err.message;
   }
