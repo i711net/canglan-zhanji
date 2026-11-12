@@ -1,0 +1,12 @@
+{
+  "name": "苍岚战纪",
+  "short_name": "苍岚战纪",
+  "start_url": "/",
+  "display": "fullscreen",
+  "orientation": "any",
+  "background_color": "#1d2620",
+  "theme_color": "#2b3a2e",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

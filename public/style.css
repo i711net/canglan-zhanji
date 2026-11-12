@@ -1,0 +1,203 @@
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body {
+  margin: 0; padding: 0; height: 100%; overflow: hidden;
+  background: #1d2620; color: #f3efe2;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  user-select: none; -webkit-user-select: none; touch-action: none;
+}
+.hidden { display: none !important; }
+.screen { position: fixed; inset: 0; }
+
+/* ---------- 登录 ---------- */
+#auth {
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+  background: radial-gradient(circle at 30% 20%, #4f7a45 0%, #24331f 60%, #161e14 100%);
+  touch-action: auto;
+}
+.auth-card {
+  width: 100%; max-width: 360px; background: rgba(30, 38, 28, .92);
+  border: 2px solid #c9a55c; border-radius: 18px; padding: 26px 22px; text-align: center;
+  box-shadow: 0 10px 40px rgba(0,0,0,.5);
+}
+.logo { font-size: 44px; }
+.auth-card h1 { margin: 6px 0 2px; font-size: 26px; color: #ffd98a; letter-spacing: 2px; }
+.sub { margin: 0 0 16px; color: #c8c2a8; font-size: 13px; }
+.tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+.tab { flex: 1; padding: 9px; border-radius: 10px; border: 1px solid #6b5a33; background: transparent; color: #d8cfb0; font-size: 15px; }
+.tab.active { background: #c9a55c; color: #2a2012; font-weight: bold; }
+#authForm input {
+  width: 100%; padding: 12px 14px; margin-bottom: 10px; border-radius: 10px;
+  border: 1px solid #6b5a33; background: #141a12; color: #fff; font-size: 16px; user-select: text; -webkit-user-select: text;
+}
+.msg { min-height: 20px; margin-top: 10px; font-size: 13px; color: #ff9b8a; }
+.msg.ok { color: #9be38a; }
+.hint { font-size: 12px; color: #9e9a86; margin: 8px 0 0; }
+
+.btn {
+  border: none; border-radius: 10px; padding: 8px 14px; font-size: 14px; cursor: pointer;
+  background: #3e4a39; color: #f3efe2; font-family: inherit;
+}
+.btn.primary { background: linear-gradient(#f0c25e, #c9902e); color: #2a1a05; font-weight: bold; }
+.btn.green { background: linear-gradient(#7bd06a, #3f9a3a); color: #0e2a0a; font-weight: bold; }
+.btn.red { background: #8a3b32; }
+.btn.big { width: 100%; padding: 13px; font-size: 17px; }
+.btn:disabled { opacity: .45; }
+.btn:active { transform: scale(.96); }
+
+/* ---------- 游戏画面 ---------- */
+#cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; background: #000; }
+
+#hud {
+  position: absolute; left: 0; right: 0; top: 0; display: flex; justify-content: space-between;
+  padding: calc(env(safe-area-inset-top) + 6px) 8px 0; pointer-events: none;
+}
+.hud-left { display: flex; gap: 6px; align-items: center; }
+.lvbadge {
+  width: 42px; height: 42px; border-radius: 50%; background: #2a2012; border: 2px solid #f0c25e;
+  display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 16px; color: #ffd98a;
+}
+.bars { width: 160px; }
+.nameRow { font-size: 12px; display: flex; gap: 6px; align-items: center; text-shadow: 0 1px 2px #000; }
+.zone { background: rgba(0,0,0,.45); padding: 0 6px; border-radius: 6px; color: #ffe7a6; }
+.bar { position: relative; height: 13px; background: rgba(0,0,0,.6); border-radius: 7px; margin-top: 3px; overflow: hidden; border: 1px solid rgba(255,255,255,.2); }
+.bar > div { height: 100%; transition: width .15s; }
+.bar.hp > div { background: linear-gradient(#ff7a6b, #c9302c); }
+.bar.mp { height: 11px; }
+.bar.mp > div { background: linear-gradient(#7fb8ff, #2a5fc9); }
+.bar.mp span { line-height: 11px; font-size: 9px; }
+.bar.xp { height: 8px; }
+.bar.xp > div { background: linear-gradient(#8fd8ff, #3487c9); }
+.bar span { position: absolute; inset: 0; font-size: 10px; line-height: 13px; text-align: center; text-shadow: 0 1px 1px #000; }
+.bar.xp span { line-height: 8px; font-size: 8px; }
+.hud-right { text-align: right; }
+.gold { background: rgba(0,0,0,.5); padding: 4px 10px; border-radius: 12px; font-weight: bold; color: #ffd98a; font-size: 14px; }
+.sync { font-size: 11px; margin-top: 4px; opacity: .85; text-shadow: 0 1px 2px #000; }
+
+#menuBar {
+  position: absolute; right: 6px; top: calc(env(safe-area-inset-top) + 106px);
+  display: flex; flex-direction: column; gap: 6px;
+}
+#menuBar button {
+  width: 46px; height: 46px; border-radius: 12px; border: 1px solid rgba(255,255,255,.25);
+  background: rgba(20, 24, 18, .7); color: #fff; font-size: 19px; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; padding: 0; line-height: 1;
+}
+#menuBar button span { font-size: 9px; margin-top: 2px; }
+
+#controls { position: absolute; right: 14px; bottom: calc(env(safe-area-inset-bottom) + 18px); width: 210px; height: 160px; }
+.cbtn {
+  position: absolute; border-radius: 50%; border: 2px solid rgba(255,255,255,.4);
+  background: rgba(30, 30, 30, .55); color: #fff; font-size: 24px; padding: 0;
+  display: flex; align-items: center; justify-content: center; flex-direction: column; touch-action: none;
+}
+.cbtn.attack { width: 84px; height: 84px; right: 0; bottom: 0; font-size: 36px; background: rgba(170, 50, 40, .65); }
+.cbtn.mini { width: 50px; height: 50px; font-size: 21px; }
+.cbtn.mini span { font-size: 11px; position: absolute; bottom: 1px; text-shadow: 0 1px 2px #000; font-weight: bold; }
+#btnPotion { right: 94px; bottom: 2px; background: rgba(40, 130, 80, .6); }
+#btnMana { right: 84px; bottom: 60px; background: rgba(40, 90, 170, .6); }
+#btnSpeed { right: 26px; bottom: 96px; background: rgba(30, 150, 190, .6); }
+#btnAuto { right: 152px; bottom: 26px; background: rgba(90, 90, 90, .6); }
+#btnSpeed.active { box-shadow: 0 0 14px 4px rgba(120, 230, 255, .8); border-color: #9feaff; }
+#btnAuto.active { background: rgba(200, 150, 30, .8); box-shadow: 0 0 14px 4px rgba(255, 210, 100, .8); border-color: #ffe08a; }
+/* 技能栏：攻击键上方一排，学会的主动技能才出现 */
+#skillBar { position: absolute; right: 12px; bottom: calc(env(safe-area-inset-bottom) + 186px); display: flex; gap: 5px; flex-direction: row-reverse; }
+.sbtn { position: relative; width: 46px; height: 46px; border-radius: 10px; border: 2px solid rgba(201,165,92,.75); background: rgba(40, 50, 110, .7); color: #fff; padding: 0; font-size: 22px; touch-action: none; }
+.sbtn b { font-weight: normal; }
+.sbtn span { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; color: #ffe9a8; text-shadow: 0 1px 3px #000; }
+.sbtn em { position: absolute; left: -6px; right: -6px; bottom: -14px; font-style: normal; font-size: 9px; color: #ffe9a8; text-shadow: 0 1px 2px #000; white-space: nowrap; overflow: hidden; }
+.sbtn.cd { filter: grayscale(.9); opacity: .65; }
+.sbtn .key { display: none; position: absolute; top: -6px; left: -6px; font-style: normal; font-size: 9px; background: #000; color: #ffd98a; border-radius: 5px; padding: 0 3px; border: 1px solid #c9a55c; }
+@media (hover: hover) and (pointer: fine) { .sbtn .key { display: block; } }
+.prog { height: 5px; background: rgba(255,255,255,.12); border-radius: 3px; margin: 4px 0 2px; overflow: hidden; }
+.prog > div { height: 100%; background: linear-gradient(90deg, #c9a55c, #ffe08a); }
+.cbtn .key { display: none; position: absolute; top: -4px; left: -4px; font-style: normal; font-size: 10px; background: #000; color: #ffd98a; border-radius: 5px; padding: 1px 4px; border: 1px solid #c9a55c; }
+@media (hover: hover) and (pointer: fine) { .cbtn .key { display: block; } }
+.buff { margin-top: 4px; display: inline-block; background: rgba(20, 120, 160, .8); padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: bold; }
+.cbtn.interact {
+  width: auto; min-width: 70px; height: 38px; border-radius: 19px; right: 0; bottom: 232px;
+  font-size: 14px; font-weight: bold; padding: 0 12px; white-space: nowrap;
+  background: rgba(220, 170, 60, .42); color: #fff; text-shadow: 0 1px 2px #000;
+  border-color: rgba(255, 220, 140, .7); animation: pulse 1.6s infinite;
+}
+@keyframes pulse { 50% { transform: scale(1.07); } }
+.cbtn:active { transform: scale(.92); }
+
+#joyBase {
+  position: absolute; width: 120px; height: 120px; border-radius: 50%;
+  background: rgba(255,255,255,.12); border: 2px solid rgba(255,255,255,.3); pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+#joyKnob {
+  position: absolute; left: 50%; top: 50%; width: 52px; height: 52px; margin: -26px 0 0 -26px;
+  border-radius: 50%; background: rgba(255,255,255,.45);
+}
+
+#toasts { position: absolute; left: 50%; top: 22%; transform: translateX(-50%); pointer-events: none; width: 80%; text-align: center; }
+.toast {
+  display: inline-block; margin: 3px auto; padding: 6px 14px; border-radius: 14px; font-size: 14px;
+  background: rgba(0,0,0,.72); border: 1px solid rgba(255, 217, 138, .5); animation: toast 2.6s forwards;
+}
+.toast-wrap { display: block; }
+@keyframes toast { 0% { opacity: 0; transform: translateY(8px); } 10% { opacity: 1; transform: none; } 80% { opacity: 1; } 100% { opacity: 0; transform: translateY(-14px); } }
+
+/* ---------- 面板 ---------- */
+#panel {
+  position: absolute; inset: 0; background: rgba(0,0,0,.55); display: flex;
+  align-items: flex-end; justify-content: center; touch-action: auto;
+}
+.panel-card {
+  width: 100%; max-width: 560px; max-height: 82vh; background: #2a2a22; border-top: 3px solid #c9a55c;
+  border-radius: 18px 18px 0 0; display: flex; flex-direction: column;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+@media (min-width: 700px) { #panel { align-items: center; } .panel-card { border-radius: 18px; border: 3px solid #c9a55c; } }
+.panel-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px 6px; }
+.panel-head h2 { margin: 0; font-size: 19px; color: #ffd98a; }
+.xbtn { background: #4a4433; color: #fff; border: none; width: 34px; height: 34px; border-radius: 50%; font-size: 16px; }
+#pBody { overflow-y: auto; padding: 4px 14px 16px; -webkit-overflow-scrolling: touch; touch-action: pan-y; }
+.section-t { margin: 12px 0 6px; font-size: 13px; color: #c9a55c; font-weight: bold; }
+.row {
+  display: flex; align-items: center; gap: 10px; background: #36352b; border-radius: 12px; padding: 9px 10px; margin-bottom: 7px;
+}
+.row .ic { font-size: 26px; width: 36px; text-align: center; flex-shrink: 0; }
+.row .info { flex: 1; min-width: 0; }
+.row .info b { font-size: 14px; }
+.row .info small { display: block; color: #bdb69d; font-size: 12px; margin-top: 2px; }
+.row .acts { display: flex; gap: 5px; flex-shrink: 0; }
+.row .acts .btn { padding: 7px 10px; font-size: 13px; }
+.need { display: inline-block; font-size: 12px; margin: 2px 6px 0 0; padding: 1px 6px; border-radius: 6px; background: #22211a; }
+.need.ok { color: #9be38a; } .need.no { color: #ff8f80; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 7px; }
+.cell { background: #36352b; border-radius: 12px; padding: 8px 4px; text-align: center; font-size: 12px; position: relative; }
+.cell .ic { font-size: 26px; display: block; }
+.cell .n { position: absolute; right: 6px; top: 4px; font-weight: bold; color: #ffd98a; font-size: 12px; }
+.statgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.stat { background: #36352b; border-radius: 10px; padding: 8px 10px; font-size: 13px; }
+.stat b { float: right; color: #ffd98a; }
+.prog { height: 8px; background: #1a1a14; border-radius: 4px; overflow: hidden; margin-top: 4px; }
+.prog > div { height: 100%; background: #7bd06a; }
+.empty { text-align: center; color: #999; padding: 20px; }
+.desc { color: #cfc8ad; font-size: 13px; line-height: 1.5; margin: 4px 0 8px; }
+
+/* 面板顶部分页 */
+.tabbar { position: sticky; top: 0; z-index: 2; display: grid; gap: 6px; padding: 4px 0 10px; background: #2a2a22; }
+.ptab { padding: 11px 4px; border-radius: 12px; border: 1px solid #5a4d2e; background: #36352b; color: #d8cfb0; font-size: 15px; font-weight: bold; font-family: inherit; }
+.ptab.on { background: linear-gradient(#f0c25e, #c9902e); color: #2a1a05; border-color: #f0c25e; }
+.row .acts.col { flex-direction: column; }
+.row.fac { align-items: flex-start; }
+.panel-card:has(.tabbar) { height: 80vh; }
+
+/* 横屏：菜单按钮改成顶部一排，不和右下角的操作按钮重叠 */
+@media (orientation: landscape) and (max-height: 600px) {
+  #menuBar {
+    top: calc(env(safe-area-inset-top) + 6px); right: auto; left: calc(env(safe-area-inset-left) + 236px);
+    flex-direction: row; gap: 6px;
+  }
+  #menuBar button { width: 44px; height: 42px; font-size: 17px; }
+  #controls { right: calc(env(safe-area-inset-right) + 14px); }
+}
+
+/* 菜单按钮上的电脑快捷键提示 */
+#menuBar button { position: relative; }
+#menuBar .key { display: none; position: absolute; top: -4px; left: -4px; font-style: normal; font-size: 9px; background: #000; color: #ffd98a; border-radius: 5px; padding: 0 3px; border: 1px solid #c9a55c; }
+@media (hover: hover) and (pointer: fine) { #menuBar .key { display: block; } }
