@@ -6,7 +6,7 @@
    ========================================================= */
 
 const API = '/api';
-const VERSION = '20261112b'; // 每次更新改这里和 index.html 里的 ?v=，手机就会加载新版
+const VERSION = '20261112c'; // 每次更新改这里和 index.html 里的 ?v=，手机就会加载新版
 const $ = (s) => document.querySelector(s);
 const rand = (a, b) => a + Math.random() * (b - a);
 const ri = (a, b) => Math.floor(rand(a, b + 1));
@@ -439,6 +439,7 @@ function newSave(nick) {
     v: 1, name: nick || '勇者', cls: '', lv: 1, exp: 0, hp: 100, gold: 30,
     inv: { potion_s: 3, mana_s: 3 },
     equip: {}, gear: [], sk: {}, opt: { autoSell: false },
+    pet: null, petGrow: { atk: 0, hp: 0, def: 0 },
     house: { tier: 0, prod: {}, fac: {} },
     shopLv: 1,
     spd: { m: 1, until: 0 },
@@ -458,6 +459,8 @@ function fixSave(d, nick) {
   for (const k of Object.keys(s.equip)) if (!SLOTS.includes(k) || !okGear(s.equip[k])) delete s.equip[k];
   s.gear = Array.isArray(s.gear) ? s.gear.filter(okGear) : [];
   s.opt = Object.assign({ autoSell: false }, s.opt);
+  s.petGrow = Object.assign({ atk: 0, hp: 0, def: 0 }, s.petGrow);
+  if (s.pet && !(s.pet.kind === 'bone' || s.pet.kind === 'beast')) s.pet = null;
   s.sk = Object.assign({}, s.sk);
   for (const k of Object.keys(s.sk)) if (!SKILL_BY_ID[k] || !s.sk[k]) delete s.sk[k];
   s.house = Object.assign({ tier: 0, prod: {}, fac: {} }, s.house);
@@ -658,7 +661,7 @@ function enterZone(id, silent, from) {
   const z = ZONES[id];
   G.zone = id;
   S.zone = id;
-  G.enemies = []; G.nodes = []; G.decor = []; G.texts = []; G.fx = []; G.npcs = []; G.critters = []; G.respawns = []; G.proj = []; G.warns = []; G.loot = []; G.pproj = []; G.walls = []; G.pet = null; G.autoTgt = null;
+  G.enemies = []; G.nodes = []; G.decor = []; G.texts = []; G.fx = []; G.npcs = []; G.critters = []; G.respawns = []; G.proj = []; G.warns = []; G.loot = []; G.pproj = []; G.walls = []; G.autoTgt = null;
   G.nest = null; G.stairs = null;
   const rnd = seeded(strHash(id));
   G.tufts = [];
@@ -696,6 +699,7 @@ function enterZone(id, silent, from) {
     // 红名恶徒：Lv10 以上的图 1 个，Lv25 以上 2 个
     for (let i = 0; i < (z.lv >= 25 ? 2 : z.lv >= 10 ? 1 : 0); i++) spawnRogue();
   }
+  if (G.pet) { G.pet.x = p.x + 30; G.pet.y = p.y + 10; } // 召唤物跟着换地图
   updateHud();
   if (!silent) toast(`📍 进入「${z.n}」`);
 }
@@ -893,10 +897,11 @@ function castSkill(id, auto) {
     case 'bone':
       if (auto && G.pet) return false;
       if (G.pet && G.pet.kind === 'beast') return say('灵兽还在，不用召唤骨卫');
+      if (G.pet) return say('骨卫还在（重新召唤等级会清零）');
       summonPet(st, 'bone', l);
       break;
     case 'beast':
-      if (auto && G.pet && G.pet.kind === 'beast') return false;
+      if (G.pet && G.pet.kind === 'beast') return say('灵兽还在（重新召唤等级会清零）');
       summonPet(st, 'beast', l);
       break;
     case 'armor':
@@ -924,7 +929,7 @@ function hitEnemy(e, atk, st, src) {
   e.flash = 0.12;
   e.aggro = true;
   const pet = src === 'pet' && G.pet;
-  if (pet) e.tgt = G.pet;
+  if (pet) { e.tgt = G.pet; e.petHit = true; }
   if (src !== 'dot' && src !== 'wall' && !e.m.boss) {
     const o = pet ? G.pet : G.player;
     const ang = Math.atan2(e.y - o.y, e.x - o.x);
@@ -933,14 +938,74 @@ function hitEnemy(e, atk, st, src) {
   floatText(e.x + (pet ? 14 : 0), e.y - e.m.size - 6, (crit ? '暴击 ' : '') + dmg, src === 'dot' ? '#9be38a' : pet ? '#bfe6ff' : crit ? '#ffb02e' : '#fff', crit ? 19 : src === 'dot' || pet ? 13 : 15);
   if (e.hp <= 0) killEnemy(e);
 }
-// 灵使的召唤物：骨卫（Lv19）或灵兽（Lv35，更强）。同时只能有一个
+// 灵使的召唤物：骨卫（Lv19）或灵兽（Lv35，更强）。同时只能有一个。
+// S.pet 记着它的种类、等级（0~7，靠战功升）和战功，换地图、重新登录都还在；它死了或主人死了就清零。
+// S.petGrow 是永久培养（攻 / 血 / 防，每级 +3%），对两种召唤物都有效。
+const PET_KC = [8, 20, 40, 70, 110, 170, 250]; // 升到 1~7 级各要多少战功（小怪 1、精英 3、红名 5、BOSS 20）
+const PET_MAX = 7, GROW_MAX = 20;
+const FEED = {
+  atk: { n: '利爪', ic: '🦷', mats: ['boar_tusk', 'stinger', 'ember', 'demon_horn', 'blood_ruby'] },
+  hp: { n: '体魄', ic: '❤️', mats: ['slime_gel', 'leather', 'wolf_fur', 'croc_scale', 'sky_steel'] },
+  def: { n: '硬皮', ic: '🛡️', mats: ['bone', 'iron_ore', 'magma_core', 'abyss_shard', 'chaos_crystal'] },
+};
+const feedCost = (k, n) => ({ gold: 150 * (n + 1) * (n + 1), [FEED[k].mats[Math.min(4, Math.floor(n / 4))]]: 4 + (n % 4) * 2 });
+// 按主人当前属性、技能等级、召唤物等级、永久培养，重新算召唤物的属性（保持血量百分比）
+function petCalc(st) {
+  const s = S.pet, pet = G.pet;
+  if (!s || !pet) return;
+  const beast = s.kind === 'beast', g = S.petGrow, lk = 1 + 0.1 * s.lv, ratio = pet.maxHp ? pet.hp / pet.maxHp : 1;
+  pet.maxHp = Math.round(st.maxHp * (beast ? 1.4 : 0.8) * lk * (1 + 0.03 * g.hp));
+  pet.hp = pet.maxHp * ratio;
+  pet.atk = Math.round(st.atk * (beast ? 0.85 + 0.1 * s.sl : 0.55 + 0.08 * s.sl) * lk * (1 + 0.03 * g.atk));
+  pet.def = Math.round(st.def * (beast ? 1 : 0.8) * lk * (1 + 0.03 * g.def));
+}
+function makePet(st) {
+  const p = G.player, beast = S.pet.kind === 'beast';
+  G.pet = { kind: S.pet.kind, n: beast ? '灵兽' : '骨卫', ic: beast ? '🐅' : '💀', x: p.x + 30, y: p.y + 10, hp: 1, maxHp: 0, atk: 0, def: 0, cd: 0, face: 1, flash: 0 };
+  petCalc(st);
+  G.pet.hp = G.pet.maxHp;
+}
 function summonPet(st, kind, l) {
-  const p = G.player, beast = kind === 'beast';
-  const hp = Math.round(st.maxHp * (beast ? 1.4 : 0.8));
-  G.pet = { kind, n: beast ? '灵兽' : '骨卫', ic: beast ? '🐅' : '💀', x: p.x + 30, y: p.y + 10, hp, maxHp: hp,
-    atk: Math.round(st.atk * (beast ? 0.85 + 0.1 * l : 0.55 + 0.08 * l)), def: Math.round(st.def * (beast ? 1 : 0.8)), cd: 0, face: 1, flash: 0 };
+  S.pet = { kind, lv: 0, kc: 0, sl: l };
+  makePet(st);
   G.fx.push({ k: 'puff', x: G.pet.x, y: G.pet.y, t: 0, life: 0.45, r: 30 });
   toast(`${G.pet.ic} ${G.pet.n}出现了`);
+  markDirty();
+}
+// 召唤物参与打死的怪算战功，够了就升级
+function petGain(n) {
+  const s = S.pet;
+  if (!s || !G.pet || s.lv >= PET_MAX) return;
+  s.kc += n;
+  let up = false;
+  while (s.lv < PET_MAX && s.kc >= PET_KC[s.lv]) { s.kc -= PET_KC[s.lv]; s.lv++; up = true; }
+  if (up) {
+    petCalc(stats());
+    G.pet.hp = G.pet.maxHp;
+    G.fx.push({ k: 'ring', x: G.pet.x, y: G.pet.y, t: 0, life: 0.5, r: 60, c: '#ffe08a' });
+    floatText(G.pet.x, G.pet.y - 50, 'LEVEL UP!', '#ffe066', 16);
+    toast(`${G.pet.ic} ${G.pet.n}升到 ${s.lv} 级！`);
+  }
+  markDirty();
+}
+function losePet() { G.pet = null; S.pet = null; markDirty(); }
+function petPanelHtml() {
+  const s = S.pet, pet = G.pet, g = S.petGrow;
+  let h = `<div class="desc">召唤物参与打死的怪算<b>战功</b>（小怪 1、精英 3、红名 5、BOSS 20），攒够就升级，最高 ${PET_MAX} 级，每级攻击、防御、生命 +10%。换地图、重新登录它都还在；<b style="color:#ff8f80">它战死或你战死，等级清零</b>。</div>`;
+  if (s && pet) {
+    const full = s.lv >= PET_MAX;
+    h += `<div class="row"><div class="ic">${pet.ic}</div><div class="info"><b>${pet.n} · ${s.lv} 级</b><small>生命 ${Math.ceil(pet.hp)}/${pet.maxHp} · 攻击 ${pet.atk} · 防御 ${pet.def}</small>
+      <div class="prog"><div style="width:${full ? 100 : (s.kc / PET_KC[s.lv]) * 100}%"></div></div><small>${full ? '已满级' : `战功 ${s.kc}/${PET_KC[s.lv]}`}</small></div></div>`;
+  } else h += `<div class="row" style="opacity:.55"><div class="ic">🐾</div><div class="info"><b>现在没有召唤物</b><small>Lv.19 学「唤骨卫」，Lv.35 学「唤灵兽」，到野外按技能召唤</small></div></div>`;
+  h += `<div class="section-t">永久培养（每级 +3%，最高 ${GROW_MAX} 级，对骨卫和灵兽都有效，不会清零）</div>`;
+  for (const k of ['atk', 'hp', 'def']) {
+    const n = g[k], F = FEED[k], label = { atk: '攻击', hp: '生命', def: '防御' }[k];
+    if (n >= GROW_MAX) { h += `<div class="row"><div class="ic">${F.ic}</div><div class="info"><b>${F.n} ${n} 级</b><small>召唤物${label} +${n * 3}% · 已培养到顶</small></div></div>`; continue; }
+    const c = feedCost(k, n);
+    h += `<div class="row"><div class="ic">${F.ic}</div><div class="info"><b>${F.n} ${n} 级 → ${n + 1} 级</b><small>召唤物${label} +${n * 3}% → +${(n + 1) * 3}%</small><div>${needHtml(c)}</div></div>
+      <div class="acts"><button class="btn primary" data-act="feed:${k}" ${canAfford(c) ? '' : 'disabled'}>喂养</button></div></div>`;
+  }
+  return h;
 }
 function dropBook() {
   const c = mySkills().filter((sk) => sk.t !== 'basic' && !hasSk(sk.id) && !has('book_' + sk.id) && sk.lv <= ZONES[G.zone].lv + 8);
@@ -961,11 +1026,12 @@ function updatePet(dt, st) {
   if (!pet) return;
   if (pet.hp <= 0) {
     G.fx.push({ k: 'puff', x: pet.x, y: pet.y, t: 0, life: 0.45, r: 30 });
-    G.pet = null;
-    toast(`${pet.ic} ${pet.n}倒下了，冷却好了再召唤`);
+    losePet();
+    toast(`${pet.ic} ${pet.n}战死了，等级清零，冷却好了再召唤`);
     return;
   }
   pet.cd -= dt; pet.flash -= dt;
+  petCalc(st); // 主人升级、换装备后，召唤物属性跟着变
   pet.hp = Math.min(pet.maxHp, pet.hp + pet.maxHp * 0.01 * dt);
   if (dist(pet, p) > 700) { pet.x = p.x; pet.y = p.y; }
   let tgt = null, bd = 1e9;
@@ -1095,6 +1161,7 @@ function killEnemy(e) {
   if (G.autoTgt === e) G.autoTgt = null;
   if (m.elite) toast(`⭐ 击败 ${m.n}`);
   S.stat.kills++;
+  if (e.petHit) petGain(m.boss ? 20 : m.rogue ? 5 : m.elite ? 3 : 1);
   if (m.boss) { S.stat.boss++; toast(`🏆 击败了 ${m.n}！`); }
   floatText(e.x, e.y - 10, '+' + gold + '💰', '#ffd98a', 14, 0.25);
   got.forEach((k, i) => floatText(e.x, e.y + 8 + i * 16, '+' + itemIc(k) + itemName(k), '#bff5b3', 13, 0.4 + i * 0.15));
@@ -1121,7 +1188,7 @@ function hurtPlayer(dmg) {
   if (p.hp <= 0) {
     p.hp = 0;
     G.deadT = 2;
-    G.pet = null; p.armorT = 0; p.ward = 0; p.mend = 0;
+    losePet(); p.armorT = 0; p.ward = 0; p.mend = 0;
     const lost = Math.floor(S.gold * 0.1);
     S.gold -= lost;
     S.stat.deaths++;
@@ -1316,7 +1383,7 @@ function upgradeFacility(f) {
 
 /* ===================== 面板 UI ===================== */
 let panelId = null;
-const PTAB = { shop: 'sell', house: 'home', bag: 'gear' }; // 面板顶部分页，记住上次选的
+const PTAB = { shop: 'sell', house: 'home', bag: 'gear', hero: 'me' }; // 面板顶部分页，记住上次选的
 function tabBar(panel, tabs) {
   return '<div class="tabbar" style="grid-template-columns:repeat(' + tabs.length + ',1fr)">' +
     tabs.map(([id, n]) => `<button class="ptab ${PTAB[panel] === id ? 'on' : ''}" data-act="tab:${panel}|${id}">${n}</button>`).join('') + '</div>';
@@ -1403,7 +1470,9 @@ const PANELS = {
   },
   hero() {
     const st = stats(), p = G.player, C = CLASSES[S.cls] || CLASSES.blade;
-    let h = `<div class="statgrid">
+    const tabs = S.cls === 'spirit' ? tabBar('hero', [['me', '🧝 角色'], ['pet', '🐾 召唤物']]) : '';
+    if (tabs && PTAB.hero === 'pet') return { title: '🧝 ' + S.name, html: tabs + petPanelHtml() };
+    let h = tabs + `<div class="statgrid">
       <div class="stat">职业<b>${C.ic} ${C.n}</b></div>
       <div class="stat">等级<b>Lv.${S.lv}</b></div>
       <div class="stat">生命<b>${Math.ceil(p.hp)}/${st.maxHp}</b></div>
@@ -1723,6 +1792,17 @@ const ACTIONS = {
     if (S.gold < bookPrice(sk)) return toast('金币不足');
     S.gold -= bookPrice(sk);
     learnSkill(id);
+  },
+  feed(k) {
+    const n = S.petGrow[k];
+    if (!FEED[k] || n >= GROW_MAX) return;
+    const c = feedCost(k, n);
+    if (!canAfford(c)) return toast('材料不足');
+    payCost(c);
+    S.petGrow[k] = n + 1;
+    petCalc(stats());
+    toast(`${FEED[k].ic} ${FEED[k].n}培养到 ${n + 1} 级`);
+    markDirty();
   },
   autosell() { S.opt.autoSell = !S.opt.autoSell; markDirty(); },
   drinkmp() { useMana(); },
@@ -2314,7 +2394,7 @@ function drawPet(pet) {
   ctx.globalAlpha = pet.flash > 0 ? 0.5 : 1;
   emoji(pet.ic, pet.x, pet.y - 8 + Math.sin(G.t * 7) * 1.5, pet.kind === 'beast' ? 38 : 30, pet.face > 0);
   ctx.globalAlpha = 1;
-  label(pet.n, pet.x, pet.y - 36, '#bfe6ff', 11);
+  label(pet.n + (S.pet && S.pet.lv ? ' Lv' + S.pet.lv : ''), pet.x, pet.y - 36, S.pet && S.pet.lv >= PET_MAX ? '#ffe08a' : '#bfe6ff', 11);
   ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(pet.x - 18, pet.y - 27, 36, 4);
   ctx.fillStyle = '#6fd8ff'; ctx.fillRect(pet.x - 18, pet.y - 27, (36 * Math.max(0, pet.hp)) / pet.maxHp, 4);
 }
@@ -2583,7 +2663,9 @@ function startGame() {
   resize();
   initPlayer();
   fillQuests();
+  G.pet = null;
   enterZone('village', true);
+  if (S.pet && S.cls === 'spirit' && hasSk(S.pet.kind)) makePet(stats()); else S.pet = null; // 上次的召唤物还在
   G.running = true;
   G.paused = false;
   G.auto = false;
