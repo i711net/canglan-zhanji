@@ -6,7 +6,7 @@
    ========================================================= */
 
 const API = '/api';
-const VERSION = '20261112f'; // 每次更新改这里和 index.html 里的 ?v=，手机就会加载新版
+const VERSION = '20261112g'; // 每次更新改这里和 index.html 里的 ?v=，手机就会加载新版
 const $ = (s) => document.querySelector(s);
 const rand = (a, b) => a + Math.random() * (b - a);
 const ri = (a, b) => Math.floor(rand(a, b + 1));
@@ -1078,11 +1078,12 @@ function petGain(n) {
 function losePet() { G.pet = null; S.pet = null; markDirty(); }
 function petPanelHtml() {
   const s = S.pet, pet = G.pet, g = S.petGrow;
-  let h = `<div class="desc">召唤物参与打死的怪算<b>战功</b>（小怪 1、精英 3、红名 5、BOSS 20），攒够就升级，每级攻击、防御、生命 +10%。<b>召唤术的阶决定最高几级：初级 3 级、中级 5 级、高级 7 级</b>。换地图、重新登录它都还在；<b style="color:#ff8f80">它战死或你战死，等级清零</b>。</div>`;
+  let h = `<div class="desc">召唤物参与打死的怪算<b>战功</b>（小怪 1、精英 3、红名 5、BOSS 20），攒够就升级，每级攻击、防御、生命 +10%。<b>召唤术的阶决定最高几级：初级 3 级、中级 5 级、高级 7 级</b>。召唤术的熟练度靠召唤物打怪来涨：它每打 2 下涨 1 点，不用让它死了重召。换地图、重新登录它都还在；<b style="color:#ff8f80">它战死或你战死，等级清零</b>。</div>`;
   if (s && pet) {
     const full = s.lv >= petMax();
     h += `<div class="row"><div class="ic">${pet.ic}</div><div class="info"><b>${pet.n} · ${s.lv} 级</b><small>生命 ${Math.ceil(pet.hp)}/${pet.maxHp} · 攻击 ${pet.atk} · 防御 ${pet.def}</small>
       <div class="prog"><div style="width:${full ? 100 : (s.kc / PET_KC[s.lv]) * 100}%"></div></div><small>${full ? (petMax() >= 7 ? '已满级' : `这一阶最高 ${petMax()} 级，把召唤术进阶后还能继续练`) : `战功 ${s.kc}/${PET_KC[s.lv]}`}</small></div></div>`;
+    h += `<div class="row"><div class="ic">↩️</div><div class="info"><b>收回召唤物</b><small>让它消失，等级清零，可以重新召唤（比如骨卫想换成灵兽之前）</small></div><div class="acts"><button class="btn red" data-act="dismiss">收回</button></div></div>`;
   } else h += `<div class="row" style="opacity:.55"><div class="ic">🐾</div><div class="info"><b>现在没有召唤物</b><small>Lv.19 学「唤骨卫」，Lv.35 学「唤灵兽」，到野外按技能召唤</small></div></div>`;
   h += `<div class="section-t">永久培养（每级 +3%，最高 ${GROW_MAX} 级，对骨卫和灵兽都有效，不会清零）</div>`;
   for (const k of ['atk', 'hp', 'def']) {
@@ -1134,7 +1135,13 @@ function updatePet(dt, st) {
     pet.x += (dx / dl) * 210 * dt; pet.y += (dy / dl) * 210 * dt;
     if (Math.abs(dx) > 2) pet.face = dx > 0 ? 1 : -1;
   }
-  if (tgt && dl <= stop + 8 && pet.cd <= 0) { pet.cd = 0.9; hitEnemy(tgt, pet.atk, st, 'pet'); }
+  if (tgt && dl <= stop + 8 && pet.cd <= 0) {
+    pet.cd = 0.9;
+    hitEnemy(tgt, pet.atk, st, 'pet');
+    // 召唤物每打 2 下，召唤术涨 1 点熟练度（不用让它死了重召来练）
+    pet.hits = (pet.hits || 0) + 1;
+    if (pet.hits % 2 === 0) trainSkill(pet.kind);
+  }
 }
 // 掉在地上的装备：走近自动捡
 function dropGear(g, x, y) {
@@ -1910,6 +1917,11 @@ const ACTIONS = {
     toast(`${sk.ic} 「${sk.n}」进阶到${RANK_N[r]}！`);
     if (G.pet) petCalc(stats());
     markDirty();
+  },
+  dismiss() {
+    if (!G.pet) return;
+    toast(`${G.pet.ic} ${G.pet.n}收回了`);
+    losePet();
   },
   autosell() { S.opt.autoSell = !S.opt.autoSell; markDirty(); },
   drinkmp() { useMana(); },
