@@ -6,7 +6,7 @@
    ========================================================= */
 
 const API = '/api';
-const VERSION = '20261112e'; // 每次更新改这里和 index.html 里的 ?v=，手机就会加载新版
+const VERSION = '20261112f'; // 每次更新改这里和 index.html 里的 ?v=，手机就会加载新版
 const $ = (s) => document.querySelector(s);
 const rand = (a, b) => a + Math.random() * (b - a);
 const ri = (a, b) => Math.floor(rand(a, b + 1));
@@ -58,6 +58,13 @@ const ITEMS = {
   blood_ruby: { n: '血红宝石', ic: '♦️', p: 280 },
   ancient_key: { n: '远古钥匙', ic: '🗝️', p: 240 },
   chaos_heart: { n: '魔蛛之心', ic: '💗', p: 6000 },
+  // 雪域 / 冰封神殿 / 龙渊
+  frost_fang: { n: '霜牙', ic: '🦷', p: 300 },
+  ice_heart: { n: '冰魄', ic: '💠', p: 420 },
+  giant_core: { n: '霜巨人之心', ic: '🩵', p: 9000 },
+  dragon_bone: { n: '龙骨', ic: '🦴', p: 520 },
+  dragon_blood: { n: '龙血', ic: '🩸', p: 680 },
+  dragon_pearl: { n: '龙珠', ic: '🔮', p: 15000 },
   upgrade_stone: { n: '强化石', ic: '💎', p: 25, quest: true },
   upgrade_stone_2: { n: '高级强化石', ic: '💠', p: 120, quest: true },
   upgrade_stone_3: { n: '神圣强化石', ic: '🔱', p: 400, quest: true },
@@ -82,13 +89,13 @@ const MANA_ORDER = ['mana_s', 'mana_m', 'mana_l', 'mana_xl'];
 const DRINK_ORDER = ['speed_xl', 'speed_l', 'speed_s']; // 默认先喝效果最强的
 
 // 怪物属性按等级查表（等级之间线性插值），每只怪再乘自己的倍率
-const LV_PTS = [1, 5, 10, 15, 20, 25, 30, 35, 40, 50];
+const LV_PTS = [1, 5, 10, 15, 20, 25, 30, 35, 40, 50, 60, 70];
 const CURVE = {
-  hp: [30, 110, 240, 470, 730, 1500, 2900, 4800, 6500, 12000],
-  atk: [6, 18, 33, 54, 81, 160, 250, 330, 440, 640],
-  def: [0, 5, 12, 20, 32, 50, 88, 130, 160, 230],
-  exp: [6, 26, 55, 105, 200, 350, 680, 1150, 1650, 3000],
-  gold: [2, 7, 13, 22, 34, 48, 85, 140, 200, 320],
+  hp: [30, 110, 240, 470, 730, 1500, 2900, 4800, 6500, 12000, 17000, 26000],
+  atk: [6, 18, 33, 54, 81, 160, 250, 330, 440, 640, 900, 1250],
+  def: [0, 5, 12, 20, 32, 50, 88, 130, 160, 230, 330, 460],
+  exp: [6, 26, 55, 105, 200, 350, 680, 1150, 1650, 3000, 5200, 8500],
+  gold: [2, 7, 13, 22, 34, 48, 85, 140, 200, 320, 480, 700],
 };
 function curve(k, lv) {
   const a = CURVE[k];
@@ -171,6 +178,24 @@ const MONS = {
   eye: mon('魔眼', '👁️', 48, [['chaos_crystal', 0.4], ['ancient_key', 0.25]], { hp: 0.9, size: 22, spd: 55, x: { ranged: shot('#ff4a8a', 190) } }),
   webguard: mon('守巢蛛', '🕷️', 49, [['chaos_crystal', 0.5], ['ancient_key', 0.15]], { hp: 1.5, atk: 1.1, size: 28, spd: 95 }),
   spiderlord: boss('赤峡魔蛛', '🕷️', 50, [['chaos_heart', 1], ['chaos_heart', 0.3], ['upgrade_stone_4', 1], ['upgrade_stone_4', 1], ['upgrade_stone_4', 0.5], ['blood_ruby', 1], ['chaos_crystal', 1], ['chaos_crystal', 1]], { hp: 23, size: 66, spd: 75, x: { slam: { r: 140, cd: 4, mult: 2 }, ranged: { range: 380, keep: 0, cd: 2.4, spd: 320, c: '#ff5a2a' } } }),
+  // 雪域（Lv52）
+  snowwolf: mon('雪原狼', '🐺', 52, [['frost_fang', 0.55]], { size: 23, spd: 115 }),
+  icebear: mon('冰熊', '🐻‍❄️', 53, [['frost_fang', 0.4], ['ice_heart', 0.2]], { hp: 1.7, size: 30, spd: 65 }),
+  snowman: mon('雪怪', '⛄', 54, [['ice_heart', 0.4]], { hp: 1.4, size: 26, spd: 55 }),
+  icesprite: mon('冰灵', '🧊', 54, [['ice_heart', 0.5]], { hp: 0.8, size: 19, spd: 80, x: { ranged: shot('#9fe8ff') } }),
+  // 冰封神殿（Lv55~57）
+  iceguard: mon('冰卫', '🥶', 55, [['ice_heart', 0.45], ['frost_fang', 0.3]], { hp: 1.4, size: 25, spd: 85 }),
+  icegolem: mon('冰晶傀儡', '💠', 56, [['ice_heart', 0.6]], { hp: 2, size: 32, spd: 45 }),
+  frostwitch: mon('霜巫', '🧙', 57, [['ice_heart', 0.5]], { hp: 0.9, size: 22, spd: 70, x: { ranged: shot('#bfe3ff', 190) } }),
+  snoweagle: mon('雪鹰', '🦅', 57, [['frost_fang', 0.5]], { hp: 0.9, atk: 1.15, size: 22, spd: 135 }),
+  frostgiant: boss('霜巨人', '🥶', 58, [['giant_core', 1], ['giant_core', 0.3], ['upgrade_stone_4', 1], ['upgrade_stone_4', 1], ['ice_heart', 1], ['ice_heart', 1]], { hp: 24, size: 66, spd: 60, x: { slam: { r: 150, cd: 4.5, mult: 2 }, ranged: { range: 380, keep: 0, cd: 2.6, spd: 320, c: '#9fe8ff' } } }),
+  // 龙渊（Lv58~62）
+  firelizard: mon('火蜥', '🦎', 58, [['dragon_bone', 0.45]], { size: 22, spd: 110 }),
+  lavafiend: mon('熔岩魔', '👿', 59, [['dragon_bone', 0.4], ['dragon_blood', 0.15]], { hp: 1.6, size: 28, spd: 70 }),
+  dragonguard: mon('龙卫', '🐲', 60, [['dragon_bone', 0.5], ['dragon_blood', 0.2]], { hp: 1.5, atk: 1.1, size: 28, spd: 90 }),
+  wyvern: mon('飞龙', '🐉', 61, [['dragon_blood', 0.4]], { hp: 0.9, size: 26, spd: 95, x: { ranged: shot('#ff6a2a', 200) } }),
+  drake: mon('渊底暴龙', '🦖', 62, [['dragon_blood', 0.45], ['dragon_bone', 0.4]], { hp: 2, atk: 1.15, size: 34, spd: 75 }),
+  abyssdragon: boss('渊龙', '🐉', 63, [['dragon_pearl', 1], ['dragon_pearl', 0.3], ['upgrade_stone_4', 1], ['upgrade_stone_4', 1], ['upgrade_stone_4', 1], ['dragon_blood', 1], ['dragon_blood', 1]], { hp: 28, size: 74, spd: 80, x: { slam: { r: 160, cd: 4, mult: 2.1 }, ranged: { range: 400, keep: 0, cd: 2.2, spd: 340, c: '#ff5a2a' } } }),
 };
 
 // 地图。野外是大地图；洞穴分层：只有第一层能从地图直接去，下面几层要走到最里面的楼梯下去（prev / next）。
@@ -199,9 +224,15 @@ const ZONES = {
   hall3: { n: '魔殿三层', ic: '🏛️', g: '魔殿', lv: 46, w: DUN, h: DUN, bg: '#2e1014', tuft: '#220b0e', mons: ['bowguard', 'hallscorpion', 'hallknight'], max: 140, nodes: { rock: 60, ore: 54 }, theme: 'chaos', elite: 0.25, nest: 24, boss: 'halllord', prev: 'hall2' },
   gorge: { n: '赤峡', ic: '🏜️', lv: 45, w: BIG, h: BIG, bg: '#a8563a', tuft: '#964a30', mons: ['bloodspider', 'gorgebeast', 'eye'], max: 146, nodes: { tree: 48, rock: 90, ore: 42 }, theme: 'desert', elite: 0.25, nest: 24, next: 'lair' },
   lair: { n: '赤峡魔穴', ic: '🕸️', g: '赤峡', lv: 48, w: DUN, h: DUN, bg: '#3a1a1e', tuft: '#2c1216', mons: ['bloodspider', 'eye', 'webguard'], max: 146, nodes: { rock: 60, ore: 54 }, theme: 'chaos', elite: 0.28, nest: 27, boss: 'spiderlord', prev: 'gorge' },
+  icefield: { n: '雪域', ic: '🏔️', lv: 52, w: BIG, h: BIG, bg: '#dfeaf2', tuft: '#c9d8e4', mons: ['snowwolf', 'icebear', 'snowman', 'icesprite'], max: 150, nodes: { tree: 60, rock: 80, ore: 40 }, theme: 'snow', elite: 0.28, nest: 28 },
+  icehall1: { n: '冰封神殿一层', ic: '🧊', g: '冰封神殿', lv: 55, w: DUN, h: DUN, bg: '#a8c4d8', tuft: '#93b2c8', mons: ['iceguard', 'icegolem', 'frostwitch'], max: 150, nodes: { rock: 60, ore: 54 }, theme: 'snow', elite: 0.3, nest: 28, next: 'icehall2' },
+  icehall2: { n: '冰封神殿二层', ic: '🧊', g: '冰封神殿', lv: 57, w: DUN, h: DUN, bg: '#93b2c8', tuft: '#7fa0b8', mons: ['icegolem', 'frostwitch', 'snoweagle'], max: 155, nodes: { rock: 60, ore: 54 }, theme: 'snow', elite: 0.32, nest: 30, boss: 'frostgiant', prev: 'icehall1' },
+  dragon1: { n: '龙渊一层', ic: '🐉', g: '龙渊', lv: 58, w: DUN, h: DUN, bg: '#4a2a1e', tuft: '#3c2018', mons: ['firelizard', 'lavafiend'], max: 155, nodes: { rock: 60, ore: 54 }, theme: 'volcano', elite: 0.32, nest: 30, next: 'dragon2' },
+  dragon2: { n: '龙渊二层', ic: '🐉', g: '龙渊', lv: 60, w: DUN, h: DUN, bg: '#40221a', tuft: '#321a14', mons: ['lavafiend', 'dragonguard', 'wyvern'], max: 160, nodes: { rock: 60, ore: 54 }, theme: 'volcano', elite: 0.34, nest: 30, prev: 'dragon1', next: 'dragon3' },
+  dragon3: { n: '龙渊三层', ic: '🐉', g: '龙渊', lv: 62, w: DUN, h: DUN, bg: '#361c16', tuft: '#2a1410', mons: ['dragonguard', 'wyvern', 'drake'], max: 160, nodes: { rock: 60, ore: 54 }, theme: 'volcano', elite: 0.36, nest: 32, boss: 'abyssdragon', prev: 'dragon2' },
 };
-const ZONE_ORDER = ['plain', 'wood', 'skel1', 'skel2', 'mine1', 'mine2', 'mine3', 'valley', 'temple1', 'temple2', 'temple3', 'worm1', 'worm2', 'tomb1', 'tomb2', 'tomb3', 'hall1', 'hall2', 'hall3', 'gorge', 'lair'];
-const gearTierOf = (zid) => clamp(Math.floor(ZONES[zid].lv / 5), 0, 9); // 这张图掉哪一档装备
+const ZONE_ORDER = ['plain', 'wood', 'skel1', 'skel2', 'mine1', 'mine2', 'mine3', 'valley', 'temple1', 'temple2', 'temple3', 'worm1', 'worm2', 'tomb1', 'tomb2', 'tomb3', 'hall1', 'hall2', 'hall3', 'gorge', 'lair', 'icefield', 'icehall1', 'icehall2', 'dragon1', 'dragon2', 'dragon3'];
+const gearTierOf = (zid) => clamp(Math.floor(ZONES[zid].lv / 5), 0, GEAR_TIERS.length - 1); // 这张图掉哪一档装备
 const NEST_ELITE = 0.35;
 
 const NODE_YIELD = {
@@ -276,50 +307,58 @@ const CLASS_IDS = Object.keys(CLASSES);
    t：basic 普通攻击自带 / passive 被动 / active 要按按钮；lv 学习等级；cd 冷却；mp 耗蓝 */
 const SKILLS = {
   blade: [
-    { id: 'sword', n: '基础剑法', ic: '🗡️', t: 'passive', lv: 7, desc: (l) => `被动：攻击 +${4 + 4 * l}%。每砍一刀涨熟练` },
+    { id: 'sword', n: '基础剑法', ic: '🗡️', t: 'passive', lv: 7, desc: (l) => `被动：攻击 +${4 + 4 * l}%。每砍一刀涨熟练度` },
     { id: 'heavy', n: '重击', ic: '💥', t: 'passive', lv: 14, desc: (l) => `被动：每第 4 刀伤害 ${160 + 20 * l}%` },
-    { id: 'arc', n: '弧月斩', ic: '🌙', t: 'active', lv: 20, cd: 5, mp: 10, desc: (l) => `横扫周身一圈，伤害 ${160 + 20 * l}%` },
-    { id: 'thrust', n: '穿刺', ic: '📍', t: 'passive', lv: 26, desc: (l) => `被动：平砍同时刺中目标身后的敌人，伤害 ${70 + 10 * l}%` },
-    { id: 'charge', n: '冲撞', ic: '💨', t: 'active', lv: 30, cd: 8, mp: 16, desc: (l) => `冲到最近的敌人面前，伤害 ${260 + 30 * l}%，撞慢 2 秒` },
+    { id: 'arc', n: '弧月斩', ic: '🌙', t: 'active', lv: 20, cd: 5, mp: 10, desc: (l) => `横扫周身一圈（阶越高范围越大），伤害 ${160 + 20 * l}%` },
+    { id: 'thrust', n: '穿刺', ic: '📍', t: 'passive', lv: 26, desc: (l) => `被动：平砍同时刺穿目标身后 ${1 + Math.round(l / 1.5)} 个敌人，伤害 ${70 + 10 * l}%${l >= 3 ? '，无视 30% 防御' : ''}` },
+    { id: 'charge', n: '冲撞', ic: '💨', t: 'active', lv: 30, cd: 8, mp: 16, desc: (l) => `冲到最近的敌人面前把它撞飞，伤害 ${260 + 30 * l}%，减速 2 秒${l >= 1.5 ? '；撞飞路上碰到的怪也受伤' : ''}` },
     { id: 'flame', n: '炎刃', ic: '🔥', t: 'active', lv: 35, cd: 10, mp: 22, desc: (l) => `剑上起火猛劈一刀，伤害 ${320 + 40 * l}%` },
   ],
   mage: [
     { id: 'fire', n: '火弹术', ic: '☄️', t: 'basic', lv: 1, desc: (l) => `普通攻击：发射火弹，伤害 ${100 + 8 * l}%` },
     { id: 'push', n: '斥力环', ic: '💫', t: 'active', lv: 12, cd: 8, mp: 14, desc: (l) => `把身边的怪弹开并减速 2 秒，伤害 ${100 + 15 * l}%` },
-    { id: 'thunder', n: '落雷', ic: '⚡', t: 'active', lv: 17, cd: 3.5, mp: 18, desc: (l) => `雷劈最近的敌人，伤害 ${260 + 30 * l}%` },
+    { id: 'thunder', n: '落雷', ic: '⚡', t: 'active', lv: 17, cd: 3.5, mp: 18, desc: (l) => `雷劈最近的敌人，伤害 ${260 + 30 * l}%${l >= 1.5 ? `，再连锁劈中旁边 ${Math.round(l / 1.5)} 个敌人（一半伤害）` : ''}` },
     { id: 'bigfire', n: '烈焰弹', ic: '🔥', t: 'passive', lv: 19, desc: (l) => `被动：火弹变大，伤害再 +${25 + 10 * l}%` },
-    { id: 'wall', n: '火墙', ic: '🧱', t: 'active', lv: 24, cd: 12, mp: 30, desc: (l) => `在敌人脚下烧起一片火 8 秒，每跳伤害 ${50 + 8 * l}%` },
+    { id: 'wall', n: '火墙', ic: '🧱', t: 'active', lv: 24, cd: 12, mp: 30, desc: (l) => `在敌人脚下烧起一片火 8 秒（阶越高范围越大），每跳伤害 ${50 + 8 * l}%` },
     { id: 'ward', n: '灵盾', ic: '🛡️', t: 'active', lv: 31, cd: 30, mp: 40, desc: (l) => `15 秒内吸收 ${40 + 8 * l}% 生命上限的伤害` },
     { id: 'ice', n: '冰暴', ic: '❄️', t: 'active', lv: 35, cd: 9, mp: 45, desc: (l) => `冰雹砸向一片敌人，伤害 ${240 + 30 * l}%，减速 3 秒` },
   ],
   spirit: [
     { id: 'charm', n: '灵符', ic: '📜', t: 'basic', lv: 1, desc: (l) => `普通攻击：掷出灵符，伤害 ${100 + 8 * l}%` },
     { id: 'heal', n: '治愈术', ic: '💚', t: 'active', lv: 7, cd: 8, mp: 14, desc: (l) => `5 秒内给自己和召唤物回复 ${30 + 6 * l}% 生命` },
-    { id: 'venom', n: '蚀毒术', ic: '☠️', t: 'active', lv: 14, cd: 9, mp: 18, desc: (l) => `附近敌人中毒 8 秒：每秒掉 ${30 + 5 * l}% 道术的血，防御 -30%` },
-    { id: 'bone', n: '唤骨卫', ic: '💀', t: 'active', lv: 19, cd: 20, mp: 30, desc: (l) => `召唤骨卫助战（攻击为你的 ${55 + 8 * l}%），怪被它打到会转去打它` },
+    { id: 'venom', n: '蚀毒术', ic: '☠️', t: 'active', lv: 14, cd: 9, mp: 18, desc: (l) => `附近敌人中毒 8 秒：每秒掉 ${30 + 6 * l}% 道术的血，防御 -30%` },
+    { id: 'bone', n: '唤骨卫', ic: '💀', t: 'active', lv: 19, cd: 20, mp: 30, desc: (l) => `召唤骨卫助战（攻击为你的 ${55 + 8 * l}%），怪被它打到会转去打它。这一阶的骨卫最高练到 ${PET_CAP[Math.round(l / 1.5)]} 级` },
     { id: 'armor', n: '灵甲术', ic: '🔰', t: 'active', lv: 25, cd: 30, mp: 30, desc: (l) => `20 秒内防御 +${30 + 8 * l}%` },
-    { id: 'beast', n: '唤灵兽', ic: '🐅', t: 'active', lv: 35, cd: 25, mp: 50, desc: (l) => `召唤灵兽（攻击为你的 ${85 + 10 * l}%，血很厚），顶替骨卫` },
+    { id: 'beast', n: '唤灵兽', ic: '🐅', t: 'active', lv: 35, cd: 25, mp: 50, desc: (l) => `召唤灵兽（攻击为你的 ${85 + 10 * l}%，血很厚），顶替骨卫。这一阶的灵兽最高练到 ${PET_CAP[Math.round(l / 1.5)]} 级` },
   ],
 };
 const SKILL_BY_ID = {};
 for (const c of CLASS_IDS) for (const sk of SKILLS[c]) { sk.cls = c; SKILL_BY_ID[sk.id] = sk; }
-const SK_PTS = [150, 500, 1200]; // 0→1、1→2、2→3 级需要的熟练度
-const SK_LVADD = [3, 6, 10]; // 升到 1/2/3 级还要求人物等级 = 学习等级 + 这么多
+/* 每个技能分三阶：初级 → 中级 → 高级。
+   买初级书学会；用得多了熟练度涨满，人物等级也够了，再去书架买中级书、高级书进阶。
+   S.sk[id].l 存的是阶（0 初级 / 1 中级 / 2 高级），算效果时用 skLv() = 阶 × 1.5（0 / 1.5 / 3）。 */
+const RANK_N = ['初级', '中级', '高级'];
+const SK_PTS = [300, 1000]; // 初级→中级、中级→高级 要练满的熟练度
+const RANK_LV = [0, 8, 16]; // 中级、高级书要求的人物等级 = 学习等级 + 这么多
+const RANK_PRICE = [1, 4, 12]; // 中级、高级书的价格是初级书的几倍
+const PET_CAP = [3, 5, 7]; // 初级 / 中级 / 高级召唤术召出来的召唤物，最高能练到几级
 const mySkills = () => SKILLS[S.cls] || SKILLS.blade;
-const skLv = (id) => (S.sk[id] ? S.sk[id].l : -1); // -1 = 没学
+const skRank = (id) => (S.sk[id] ? S.sk[id].l : -1); // 阶：0 初级 / 1 中级 / 2 高级，-1 = 没学
+const skLv = (id) => (S.sk[id] ? S.sk[id].l * 1.5 : -1); // 算效果用的等级：0 / 1.5 / 3
+const rankPrice = (sk, r) => bookPrice(sk) * RANK_PRICE[r];
+const rankNeedLv = (sk, r) => sk.lv + RANK_LV[r];
 const hasSk = (id) => !!S.sk[id];
 const skillCost = (sk) => Math.round(sk.mp * (1 + S.lv / 25));
 const activeSkills = () => mySkills().filter((sk) => sk.t === 'active' && hasSk(sk.id));
 const bookPrice = (sk) => (sk.lv <= 20 ? 200 + sk.lv * 150 : sk.lv * sk.lv * 40);
 for (const sk of Object.values(SKILL_BY_ID)) ITEMS['book_' + sk.id] = { n: '《' + sk.n + '》', ic: '📕', p: Math.round(bookPrice(sk) / 4), book: sk.id };
-// 用技能涨熟练度，够了就升级
+// 用技能涨熟练度。练满后不会自动升阶，要去书架买下一阶的书
 function trainSkill(id, n) {
   const st = S.sk[id], sk = SKILL_BY_ID[id];
-  if (!st || st.l >= 3) return;
-  st.x = (st.x || 0) + (n || 1);
-  if (st.x >= SK_PTS[st.l] && S.lv >= sk.lv + SK_LVADD[st.l]) {
-    st.x = 0; st.l++;
-    toast(`${sk.ic} 「${sk.n}」练到 ${st.l} 级！`);
+  if (!st || st.l >= 2 || st.x >= SK_PTS[st.l]) return;
+  st.x = Math.min(SK_PTS[st.l], (st.x || 0) + (n || 1));
+  if (st.x >= SK_PTS[st.l]) {
+    toast(`${sk.ic} 「${sk.n}」${RANK_N[st.l]}已练满！Lv.${rankNeedLv(sk, st.l + 1)} 可到书架买${RANK_N[st.l + 1]}书进阶`);
     markDirty();
   }
 }
@@ -343,17 +382,17 @@ const QUALITY = [
 ];
 // 装备名字：武器、衣甲每个职业一套，每 5 级换一把；首饰按材质分档
 const WPN_NAMES = {
-  blade: ['木剑', '青铜剑', '精铁剑', '斩马刀', '凌风剑', '裂岩刃', '寒魄剑', '断岳刀', '焚天剑', '苍岚龙渊'],
-  mage: ['木杖', '青藤杖', '琉璃杖', '星火杖', '霜语杖', '雷纹杖', '玄晶杖', '焚星杖', '镇魂杖', '苍岚穹杖'],
-  spirit: ['竹符剑', '松纹剑', '青铜铃剑', '伏灵剑', '玄符剑', '白虹剑', '镇岳剑', '渡厄剑', '太清剑', '苍岚归一'],
+  blade: ['木剑', '青铜剑', '精铁剑', '斩马刀', '凌风剑', '裂岩刃', '寒魄剑', '断岳刀', '焚天剑', '苍岚龙渊', '星陨剑', '天罡破军', '鸿蒙开天'],
+  mage: ['木杖', '青藤杖', '琉璃杖', '星火杖', '霜语杖', '雷纹杖', '玄晶杖', '焚星杖', '镇魂杖', '苍岚穹杖', '星陨杖', '天罡雷杖', '鸿蒙法杖'],
+  spirit: ['竹符剑', '松纹剑', '青铜铃剑', '伏灵剑', '玄符剑', '白虹剑', '镇岳剑', '渡厄剑', '太清剑', '苍岚归一', '星陨符剑', '天罡伏魔', '鸿蒙无极'],
 };
 const ARM_NAMES = {
-  blade: ['布衣', '轻皮甲', '镶铁甲', '重铠', '虎贲铠', '玄铁铠', '龙鳞铠', '破军铠', '镇狱铠', '苍岚战铠'],
-  mage: ['布衣', '学徒袍', '星纹袍', '法师长袍', '霜华袍', '雷云袍', '玄晶袍', '焚星袍', '镇魂袍', '苍岚法袍'],
-  spirit: ['布衣', '行者衣', '松风衣', '伏灵衣', '玄符衣', '白虹衣', '镇岳衣', '渡厄衣', '太清衣', '苍岚道衣'],
+  blade: ['布衣', '轻皮甲', '镶铁甲', '重铠', '虎贲铠', '玄铁铠', '龙鳞铠', '破军铠', '镇狱铠', '苍岚战铠', '星陨铠', '天罡战铠', '鸿蒙神铠'],
+  mage: ['布衣', '学徒袍', '星纹袍', '法师长袍', '霜华袍', '雷云袍', '玄晶袍', '焚星袍', '镇魂袍', '苍岚法袍', '星陨袍', '天罡法袍', '鸿蒙神袍'],
+  spirit: ['布衣', '行者衣', '松风衣', '伏灵衣', '玄符衣', '白虹衣', '镇岳衣', '渡厄衣', '太清衣', '苍岚道衣', '星陨衣', '天罡道衣', '鸿蒙神衣'],
 };
-const GEAR_TIERS = ['皮制', '青铜', '精铁', '白银', '黄金', '翡翠', '玛瑙', '紫晶', '玄晶', '龙魂'];
-const TIER_LV = [1, 5, 10, 15, 20, 25, 30, 35, 40, 45]; // 穿戴需要的等级
+const GEAR_TIERS = ['皮制', '青铜', '精铁', '白银', '黄金', '翡翠', '玛瑙', '紫晶', '玄晶', '龙魂', '星陨', '天罡', '鸿蒙'];
+const TIER_LV = [1, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60]; // 穿戴需要的等级
 const SLOTS = ['weapon', 'armor', 'helmet', 'necklace', 'ring', 'boots'];
 const SLOT_N = { weapon: '武器', armor: '衣甲', helmet: '头盔', necklace: '项链', ring: '戒指', boots: '靴子' };
 const SLOT_IC = { weapon: '🗡️', armor: '🥋', helmet: '⛑️', necklace: '📿', ring: '💍', boots: '🥾' };
@@ -406,7 +445,8 @@ function enhanceCost(g) {
 }
 // 红名恶徒（AI 扮演的敌对玩家）
 const ROGUE_NAMES = ['血手阿屠', '夜枭', '独眼老莫', '赤蛇', '断刃', '鬼面书生', '黑鸦', '疯刀客', '冷月', '铁面'];
-const expNeed = (lv) => Math.floor(20 * Math.pow(lv, 1.6));
+// 升级要的经验。后面那项让高等级明显变慢：大约 Lv10 要打 70 多只同级怪，Lv30 起每级 200 只以上（挂机也得挂一阵）
+const expNeed = (lv) => Math.floor(20 * Math.pow(lv, 1.6) + 1.4 * Math.pow(lv, 3.37));
 
 // shop: 需要的杂货铺等级
 const SHOP_BUY = [
@@ -436,7 +476,7 @@ const SHOP_BUY = [
 let S = null; // 当前存档（会上传到云端）
 function newSave(nick) {
   return {
-    v: 1, name: nick || '勇者', cls: '', lv: 1, exp: 0, hp: 100, gold: 30,
+    v: 2, name: nick || '勇者', cls: '', lv: 1, exp: 0, hp: 100, gold: 30,
     inv: { potion_s: 3, mana_s: 3 },
     equip: {}, gear: [], sk: {}, opt: { autoSell: false },
     pet: null, petGrow: { atk: 0, hp: 0, def: 0 },
@@ -463,6 +503,10 @@ function fixSave(d, nick) {
   if (s.pet && !(s.pet.kind === 'bone' || s.pet.kind === 'beast')) s.pet = null;
   s.sk = Object.assign({}, s.sk);
   for (const k of Object.keys(s.sk)) if (!SKILL_BY_ID[k] || !s.sk[k]) delete s.sk[k];
+  // 旧存档（技能 0~3 级）换算成新的三阶：0、1 级 → 初级，2 级 → 中级，3 级 → 高级
+  if (d && (d.v || 1) < 2) for (const k of Object.keys(s.sk)) { const o = s.sk[k].l || 0; s.sk[k] = { l: o >= 3 ? 2 : o >= 2 ? 1 : 0, x: 0 }; }
+  for (const k of Object.keys(s.sk)) { s.sk[k].l = clamp(s.sk[k].l || 0, 0, 2); s.sk[k].x = s.sk[k].x || 0; }
+  s.v = 2;
   s.house = Object.assign({ tier: 0, prod: {}, fac: {} }, s.house);
   s.house.prod = Object.assign({}, s.house.prod);
   s.house.fac = Object.assign({}, s.house.fac);
@@ -649,7 +693,7 @@ function stats() {
   const L = S.lv, h = HOUSE[S.house.tier], C = CLASSES[S.cls] || CLASSES.blade, p = G.player;
   const g = { atk: 0, def: 0, hp: 0, crit: 0, cd: 0, spd: 0 };
   for (const s of SLOTS) { const it = S.equip[s]; if (it) for (const [a, v] of Object.entries(gearStats(it))) g[a] += v; }
-  const sw = S.sk.sword ? 1.04 + 0.04 * S.sk.sword.l : 1; // 剑士「基础剑法」
+  const sw = S.sk.sword ? 1.04 + 0.04 * skLv('sword') : 1; // 剑士「基础剑法」
   const ar = p && p.armorT > 0 ? 1 + p.armorK : 1; // 灵使「灵甲术」
   return {
     maxHp: Math.round((100 + 22 * (L - 1) + g.hp + h.hp) * C.hp),
@@ -829,8 +873,11 @@ function playerAttack() {
   }
   if (hasSk('thrust')) { // 穿刺：顺着方向再刺中身后一个
     const bx = best.x + Math.cos(p.dir) * 60, by = best.y + Math.sin(p.dir) * 60;
-    const second = G.enemies.find((e) => e !== best && Math.hypot(e.x - bx, e.y - by) < 55 + e.m.size);
-    if (second) { hitEnemy(second, st.atk * (0.7 + 0.1 * skLv('thrust')), st); trainSkill('thrust'); }
+    // 阶越高刺穿越多：初级 1 个、中级 2 个、高级 3 个且无视 30% 防御
+    const r = skRank('thrust');
+    const behind = G.enemies.filter((e) => e !== best && Math.hypot(e.x - bx, e.y - by) < 55 + r * 25 + e.m.size).slice(0, 1 + r);
+    for (const e of behind) hitEnemy(e, st.atk * (0.7 + 0.1 * skLv('thrust')) + (r >= 2 ? e.m.def * 0.18 : 0), st);
+    if (behind.length) trainSkill('thrust');
   }
   hitEnemy(best, st.atk * k, st);
 }
@@ -845,10 +892,11 @@ function castSkill(id, auto) {
   if (p.mp < cost) return say('灵力不足，喝瓶灵泉（🔹）');
   switch (id) {
     case 'arc': {
-      const hit = G.enemies.filter((e) => dist(p, e) < 115 + e.m.size);
+      const R = 115 + skRank('arc') * 20;
+      const hit = G.enemies.filter((e) => dist(p, e) < R + e.m.size);
       if (auto && !hit.length) return false;
       p.swing = 0.4;
-      G.fx.push({ k: 'ring', x: p.x, y: p.y, t: 0, life: 0.45, r: 115 });
+      G.fx.push({ k: 'ring', x: p.x, y: p.y, t: 0, life: 0.45, r: R });
       for (const e of hit) hitEnemy(e, st.atk * (1.6 + 0.2 * l), st);
       break;
     }
@@ -872,6 +920,12 @@ function castSkill(id, auto) {
       p.y = clamp(e.y - Math.sin(a) * (e.m.size + 26), 30, z.h - 20);
       p.face = e.x >= p.x ? 1 : -1; p.dir = a; p.swing = 0.3;
       e.slow = 2;
+      const r = skRank('charge');
+      if (!e.m.boss) { // 撞飞：阶越高推得越远
+        const push = 110 + r * 45;
+        e.x = clamp(e.x + Math.cos(a) * push, 20, z.w - 20); e.y = clamp(e.y + Math.sin(a) * push, 20, z.h - 20);
+        if (r >= 1) for (const o of G.enemies.filter((o) => o !== e && dist(o, e) < 70 + o.m.size)) { o.slow = 2; hitEnemy(o, st.atk * (1 + 0.2 * l), st); }
+      }
       hitEnemy(e, st.atk * (2.6 + 0.3 * l), st);
       break;
     }
@@ -888,13 +942,16 @@ function castSkill(id, auto) {
       if (!e) return say('附近没有敌人');
       p.swing = 0.3;
       G.fx.push({ k: 'bolt', x: e.x, y: e.y, t: 0, life: 0.3 });
+      // 中级起连锁：再劈中旁边 1 个（高级 2 个），一半伤害
+      const chain = G.enemies.filter((o) => o !== e && dist(o, e) < 180 + o.m.size).slice(0, skRank('thunder'));
+      for (const o of chain) { G.fx.push({ k: 'bolt', x: o.x, y: o.y, t: 0, life: 0.3 }); hitEnemy(o, st.atk * (2.6 + 0.3 * l) * 0.5, st); }
       hitEnemy(e, st.atk * (2.6 + 0.3 * l), st);
       break;
     }
     case 'wall': {
       const e = nearestEnemy(340);
       if (!e) return say('附近没有敌人');
-      G.walls.push({ x: e.x, y: e.y, r: 95, t: 8, tk: 0, k: 0.5 + 0.08 * l });
+      G.walls.push({ x: e.x, y: e.y, r: 95 + skRank('wall') * 20, t: 8, tk: 0, k: 0.5 + 0.08 * l });
       break;
     }
     case 'ice': {
@@ -920,7 +977,7 @@ function castSkill(id, auto) {
       if (!hit.length) return say('附近没有敌人');
       if (auto && hit.every((e) => e.poison > 2)) return false;
       G.fx.push({ k: 'ring', x: p.x, y: p.y, t: 0, life: 0.5, r: 240, c: '#8ae06a' });
-      for (const e of hit) { e.poison = 8; e.pdmg = Math.round(st.atk * (0.3 + 0.05 * l)); e.ptk = 0; e.aggro = true; }
+      for (const e of hit) { e.poison = 8; e.pdmg = Math.round(st.atk * (0.3 + 0.06 * l)); e.ptk = 0; e.aggro = true; }
       break;
     }
     case 'bone':
@@ -970,8 +1027,9 @@ function hitEnemy(e, atk, st, src) {
 // 灵使的召唤物：骨卫（Lv19）或灵兽（Lv35，更强）。同时只能有一个。
 // S.pet 记着它的种类、等级（0~7，靠战功升）和战功，换地图、重新登录都还在；它死了或主人死了就清零。
 // S.petGrow 是永久培养（攻 / 血 / 防，每级 +3%），对两种召唤物都有效。
-const PET_KC = [8, 20, 40, 70, 110, 170, 250]; // 升到 1~7 级各要多少战功（小怪 1、精英 3、红名 5、BOSS 20）
-const PET_MAX = 7, GROW_MAX = 20;
+const PET_KC = [30, 80, 160, 280, 450, 700, 1000]; // 升到 1~7 级各要多少战功（小怪 1、精英 3、红名 5、BOSS 20）
+const GROW_MAX = 20;
+const petMax = () => (S.pet ? PET_CAP[Math.max(0, skRank(S.pet.kind))] : 0); // 召唤术的阶决定召唤物最高几级
 const FEED = {
   atk: { n: '利爪', ic: '🦷', mats: ['boar_tusk', 'stinger', 'ember', 'demon_horn', 'blood_ruby'] },
   hp: { n: '体魄', ic: '❤️', mats: ['slime_gel', 'leather', 'wolf_fur', 'croc_scale', 'sky_steel'] },
@@ -985,7 +1043,7 @@ function petCalc(st) {
   const beast = s.kind === 'beast', g = S.petGrow, lk = 1 + 0.1 * s.lv, ratio = pet.maxHp ? pet.hp / pet.maxHp : 1;
   pet.maxHp = Math.round(st.maxHp * (beast ? 1.4 : 0.8) * lk * (1 + 0.03 * g.hp));
   pet.hp = pet.maxHp * ratio;
-  pet.atk = Math.round(st.atk * (beast ? 0.85 + 0.1 * s.sl : 0.55 + 0.08 * s.sl) * lk * (1 + 0.03 * g.atk));
+  pet.atk = Math.round(st.atk * (beast ? 0.85 + 0.1 * Math.max(0, skLv('beast')) : 0.55 + 0.08 * Math.max(0, skLv('bone'))) * lk * (1 + 0.03 * g.atk));
   pet.def = Math.round(st.def * (beast ? 1 : 0.8) * lk * (1 + 0.03 * g.def));
 }
 function makePet(st) {
@@ -1004,10 +1062,10 @@ function summonPet(st, kind, l) {
 // 召唤物参与打死的怪算战功，够了就升级
 function petGain(n) {
   const s = S.pet;
-  if (!s || !G.pet || s.lv >= PET_MAX) return;
+  if (!s || !G.pet || s.lv >= petMax()) return;
   s.kc += n;
   let up = false;
-  while (s.lv < PET_MAX && s.kc >= PET_KC[s.lv]) { s.kc -= PET_KC[s.lv]; s.lv++; up = true; }
+  while (s.lv < petMax() && s.kc >= PET_KC[s.lv]) { s.kc -= PET_KC[s.lv]; s.lv++; up = true; }
   if (up) {
     petCalc(stats());
     G.pet.hp = G.pet.maxHp;
@@ -1020,11 +1078,11 @@ function petGain(n) {
 function losePet() { G.pet = null; S.pet = null; markDirty(); }
 function petPanelHtml() {
   const s = S.pet, pet = G.pet, g = S.petGrow;
-  let h = `<div class="desc">召唤物参与打死的怪算<b>战功</b>（小怪 1、精英 3、红名 5、BOSS 20），攒够就升级，最高 ${PET_MAX} 级，每级攻击、防御、生命 +10%。换地图、重新登录它都还在；<b style="color:#ff8f80">它战死或你战死，等级清零</b>。</div>`;
+  let h = `<div class="desc">召唤物参与打死的怪算<b>战功</b>（小怪 1、精英 3、红名 5、BOSS 20），攒够就升级，每级攻击、防御、生命 +10%。<b>召唤术的阶决定最高几级：初级 3 级、中级 5 级、高级 7 级</b>。换地图、重新登录它都还在；<b style="color:#ff8f80">它战死或你战死，等级清零</b>。</div>`;
   if (s && pet) {
-    const full = s.lv >= PET_MAX;
+    const full = s.lv >= petMax();
     h += `<div class="row"><div class="ic">${pet.ic}</div><div class="info"><b>${pet.n} · ${s.lv} 级</b><small>生命 ${Math.ceil(pet.hp)}/${pet.maxHp} · 攻击 ${pet.atk} · 防御 ${pet.def}</small>
-      <div class="prog"><div style="width:${full ? 100 : (s.kc / PET_KC[s.lv]) * 100}%"></div></div><small>${full ? '已满级' : `战功 ${s.kc}/${PET_KC[s.lv]}`}</small></div></div>`;
+      <div class="prog"><div style="width:${full ? 100 : (s.kc / PET_KC[s.lv]) * 100}%"></div></div><small>${full ? (petMax() >= 7 ? '已满级' : `这一阶最高 ${petMax()} 级，把召唤术进阶后还能继续练`) : `战功 ${s.kc}/${PET_KC[s.lv]}`}</small></div></div>`;
   } else h += `<div class="row" style="opacity:.55"><div class="ic">🐾</div><div class="info"><b>现在没有召唤物</b><small>Lv.19 学「唤骨卫」，Lv.35 学「唤灵兽」，到野外按技能召唤</small></div></div>`;
   h += `<div class="section-t">永久培养（每级 +3%，最高 ${GROW_MAX} 级，对骨卫和灵兽都有效，不会清零）</div>`;
   for (const k of ['atk', 'hp', 'def']) {
@@ -1523,14 +1581,14 @@ const PANELS = {
         ? `<div class="row"><div class="ic">${SLOT_IC[s]}</div><div class="info">${gearHtml(g)}<small>${QUALITY[g.q].n}${SLOT_N[s]} · ${gearText(g)}</small></div><div class="acts"><button class="btn" data-act="unequip:${s}">卸下</button></div></div>`
         : `<div class="row" style="opacity:.55"><div class="ic">${SLOT_IC[s]}</div><div class="info"><b>${SLOT_N[s]}：空</b><small>打怪掉落，在背包里穿戴</small></div></div>`;
     }
-    h += '<div class="section-t">技能（技能书在杂货铺「📖 书架」买，红名和 BOSS 也会掉；用得越多等级越高）</div>';
+    h += '<div class="section-t">技能（分初级 / 中级 / 高级三阶：书架买初级书学会，练满熟练度后买中级、高级书进阶）</div>';
     for (const sk of mySkills()) {
       const k = S.sk[sk.id], tag = { basic: '普攻', passive: '被动', active: '主动' }[sk.t];
       if (!k) { h += `<div class="row" style="opacity:.5"><div class="ic">🔒</div><div class="info"><b>${sk.n}</b> <small style="display:inline">（${tag}）</small><small>${sk.desc(0)}</small><small>Lv.${sk.lv} 可学 · 需要技能书</small></div></div>`; continue; }
-      const need = sk.lv + SK_LVADD[Math.min(2, k.l)];
-      const prog = k.l >= 3 ? '已练满' : `熟练度 ${Math.min(k.x, SK_PTS[k.l])}/${SK_PTS[k.l]}${S.lv < need ? ' · 升级还要人物 Lv.' + need : ''}`;
-      h += `<div class="row"><div class="ic">${sk.ic}</div><div class="info"><b>${sk.n} · ${k.l} 级</b> <small style="display:inline">（${tag}）</small><small>${sk.desc(k.l)}</small>
-        ${sk.t === 'active' ? `<small>冷却 ${sk.cd} 秒 · 灵力 ${skillCost(sk)}</small>` : ''}<div class="prog"><div style="width:${k.l >= 3 ? 100 : Math.min(100, (k.x / SK_PTS[k.l]) * 100)}%"></div></div><small>${prog}</small></div></div>`;
+      const top = k.l >= 2, full = !top && k.x >= SK_PTS[k.l];
+      const prog = top ? '已是最高阶' : full ? `已练满 · Lv.${rankNeedLv(sk, k.l + 1)} 可到书架买${RANK_N[k.l + 1]}书进阶` : `熟练度 ${k.x}/${SK_PTS[k.l]}`;
+      h += `<div class="row"><div class="ic">${sk.ic}</div><div class="info"><b>${sk.n} · ${RANK_N[k.l]}</b> <small style="display:inline">（${tag}）</small><small>${sk.desc(k.l * 1.5)}</small>
+        ${sk.t === 'active' ? `<small>冷却 ${sk.cd} 秒 · 灵力 ${skillCost(sk)}</small>` : ''}<div class="prog"><div style="width:${top ? 100 : Math.min(100, (k.x / SK_PTS[k.l]) * 100)}%"></div></div><small>${prog}</small></div></div>`;
     }
     return { title: '🧝 ' + S.name, html: h };
   },
@@ -1573,13 +1631,20 @@ const PANELS = {
     const tab = PTAB.shop;
     let h = tabBar('shop', [['up', '⬆️ 升级'], ['sell', '💰 卖货'], ['buy', '🛒 买货'], ['book', '📖 书架']]);
     if (tab === 'book') {
-      h += `<div class="desc">💰 现有金币：<b>${fmt(S.gold)}</b>　等级够了买技能书就能学会。高级的书很贵，红名恶徒和 BOSS 也会掉。</div>`;
+      h += `<div class="desc">💰 现有金币：<b>${fmt(S.gold)}</b>　每个技能分<b>初级 / 中级 / 高级</b>三阶。买初级书学会；把熟练度练满、人物等级也够了，再买中级书、高级书进阶，效果一阶比一阶强。初级书红名恶徒和 BOSS 也会掉。</div>`;
       for (const sk of mySkills()) {
-        if (sk.t === 'basic') continue;
-        const own = has('book_' + sk.id) > 0;
-        const btn = hasSk(sk.id) ? '<button class="btn" disabled>已学会</button>' : S.lv < sk.lv ? `<button class="btn" disabled>Lv.${sk.lv}</button>`
-          : `<button class="btn primary" data-act="buybook:${sk.id}" ${own || S.gold >= bookPrice(sk) ? '' : 'disabled'}>${own ? '学习' : '买来学'}</button>`;
-        h += `<div class="row" style="${hasSk(sk.id) ? 'opacity:.55' : ''}"><div class="ic">${sk.ic}</div><div class="info"><b>《${sk.n}》</b> <small style="display:inline">（${sk.t === 'passive' ? '被动' : '主动'}）</small><small>${sk.desc(0)}</small><small>需要 Lv.${sk.lv} · ${own ? '背包里已有这本书' : fmt(bookPrice(sk)) + ' 金币'}</small></div><div class="acts">${btn}</div></div>`;
+        const k = S.sk[sk.id], tag = { basic: '普攻', passive: '被动', active: '主动' }[sk.t];
+        if (!k) {
+          const own = has('book_' + sk.id) > 0;
+          const btn = S.lv < sk.lv ? `<button class="btn" disabled>Lv.${sk.lv}</button>` : `<button class="btn primary" data-act="buybook:${sk.id}" ${own || S.gold >= bookPrice(sk) ? '' : 'disabled'}>${own ? '学习' : '买来学'}</button>`;
+          h += `<div class="row"><div class="ic">${sk.ic}</div><div class="info"><b>《${sk.n}·初级》</b> <small style="display:inline">（${tag}）</small><small>${sk.desc(0)}</small><small>需要 Lv.${sk.lv} · ${own ? '背包里已有这本书' : fmt(bookPrice(sk)) + ' 金币'}</small></div><div class="acts">${btn}</div></div>`;
+          continue;
+        }
+        if (k.l >= 2) { h += `<div class="row" style="opacity:.55"><div class="ic">${sk.ic}</div><div class="info"><b>${sk.n} · 高级</b><small>${sk.desc(3)}</small><small>已是最高阶</small></div></div>`; continue; }
+        const r = k.l + 1, needLv = rankNeedLv(sk, r), price = rankPrice(sk, r), full = k.x >= SK_PTS[k.l];
+        const why = !full ? `熟练 ${k.x}/${SK_PTS[k.l]}` : S.lv < needLv ? 'Lv.' + needLv : '';
+        const btn = why ? `<button class="btn" disabled>${why}</button>` : `<button class="btn primary" data-act="rankup:${sk.id}" ${S.gold >= price ? '' : 'disabled'}>进阶</button>`;
+        h += `<div class="row"><div class="ic">${sk.ic}</div><div class="info"><b>《${sk.n}·${RANK_N[r]}》</b> <small style="display:inline">（现在${RANK_N[k.l]}）</small><small>进阶后：${sk.desc(r * 1.5)}</small><small>需要 Lv.${needLv}、${RANK_N[k.l]}熟练度练满 · ${fmt(price)} 金币</small></div><div class="acts">${btn}</div></div>`;
       }
       return { title: '🏪 ' + SL.n, html: h };
     }
@@ -1831,6 +1896,19 @@ const ACTIONS = {
     S.petGrow[k] = n + 1;
     petCalc(stats());
     toast(`${FEED[k].ic} ${FEED[k].n}培养到 ${n + 1} 级`);
+    markDirty();
+  },
+  rankup(id) {
+    const sk = SKILL_BY_ID[id], k = S.sk[id];
+    if (!sk || !k || k.l >= 2) return;
+    const r = k.l + 1;
+    if (k.x < SK_PTS[k.l]) return toast('熟练度还没练满');
+    if (S.lv < rankNeedLv(sk, r)) return toast(`需要 Lv.${rankNeedLv(sk, r)}`);
+    if (S.gold < rankPrice(sk, r)) return toast('金币不足');
+    S.gold -= rankPrice(sk, r);
+    k.l = r; k.x = 0;
+    toast(`${sk.ic} 「${sk.n}」进阶到${RANK_N[r]}！`);
+    if (G.pet) petCalc(stats());
     markDirty();
   },
   autosell() { S.opt.autoSell = !S.opt.autoSell; markDirty(); },
@@ -2329,8 +2407,8 @@ function drawDeco(d, theme) {
 }
 
 // 装备档次对应的衣服 / 武器颜色
-const TIER_COL = ['#7c6a52', '#8b5a2b', '#b8733a', '#bfe3ff', '#d24a2a', '#5a7a6a', '#6a3a9a', '#4aa8e8', '#8a1a2a', '#ffd84a'];
-const WPN_COL = ['#a87a4a', '#c0c6cc', '#e0935a', '#9fe8ff', '#ff6a3a', '#8affc8', '#c07aff', '#7ad8ff', '#ff3a5a', '#fff27a'];
+const TIER_COL = ['#7c6a52', '#8b5a2b', '#b8733a', '#bfe3ff', '#d24a2a', '#5a7a6a', '#6a3a9a', '#4aa8e8', '#8a1a2a', '#ffd84a', '#3a4a8a', '#c9c9d8', '#f2f2ff'];
+const WPN_COL = ['#a87a4a', '#c0c6cc', '#e0935a', '#9fe8ff', '#ff6a3a', '#8affc8', '#c07aff', '#7ad8ff', '#ff3a5a', '#fff27a', '#9ab8ff', '#ffd0a0', '#ffffff'];
 // 画一个小人（主角和红名恶徒共用）。o：face 朝向，bob 上下晃，body 衣服色，wpn 武器色，cls 职业，swing 挥动，hurt 受击，hair 发色
 function drawHuman(x, y, o) {
   ctx.save();
@@ -2423,7 +2501,7 @@ function drawPet(pet) {
   ctx.globalAlpha = pet.flash > 0 ? 0.5 : 1;
   emoji(pet.ic, pet.x, pet.y - 8 + Math.sin(G.t * 7) * 1.5, pet.kind === 'beast' ? 38 : 30, pet.face > 0);
   ctx.globalAlpha = 1;
-  label(pet.n + (S.pet && S.pet.lv ? ' Lv' + S.pet.lv : ''), pet.x, pet.y - 36, S.pet && S.pet.lv >= PET_MAX ? '#ffe08a' : '#bfe6ff', 11);
+  label(pet.n + (S.pet && S.pet.lv ? ' Lv' + S.pet.lv : ''), pet.x, pet.y - 36, S.pet && S.pet.lv >= 7 ? '#ffe08a' : '#bfe6ff', 11);
   ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(pet.x - 18, pet.y - 27, 36, 4);
   ctx.fillStyle = '#6fd8ff'; ctx.fillRect(pet.x - 18, pet.y - 27, (36 * Math.max(0, pet.hp)) / pet.maxHp, 4);
 }
