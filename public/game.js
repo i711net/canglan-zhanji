@@ -6,7 +6,7 @@
    ========================================================= */
 
 const API = '/api';
-const VERSION = '20261115f'; // 每次更新改这里和 index.html 里的 ?v=，手机就会加载新版
+const VERSION = '20261115g'; // 每次更新改这里和 index.html 里的 ?v=，手机就会加载新版
 const $ = (s) => document.querySelector(s);
 const rand = (a, b) => a + Math.random() * (b - a);
 const ri = (a, b) => Math.floor(rand(a, b + 1));
@@ -2147,6 +2147,18 @@ function floatText(x, y, text, color, size, delay) {
 }
 
 /* ===================== 输入 ===================== */
+// iPhone：登录时弹过键盘，页面会被往上推一点。键盘收起后画面看着正常，但按钮的触摸位置还偏着
+// （要点在按钮上面一点才有反应）。这里在各种时机把页面推回原位。
+function fixScroll() {
+  const a = document.activeElement;
+  if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA')) return; // 正在打字时不动
+  if (window.scrollX || window.scrollY) window.scrollTo(0, 0);
+  document.documentElement.scrollTop = 0; document.body.scrollTop = 0;
+}
+document.addEventListener('focusout', () => { setTimeout(fixScroll, 60); setTimeout(fixScroll, 400); });
+addEventListener('scroll', () => { if (G.running) fixScroll(); });
+if (window.visualViewport) { visualViewport.addEventListener('resize', () => setTimeout(fixScroll, 60)); visualViewport.addEventListener('scroll', () => { if (G.running) fixScroll(); }); }
+
 const joyBase = $('#joyBase'), joyKnob = $('#joyKnob');
 cv.addEventListener('pointerdown', (e) => {
   if (G.joy.id !== null) return;
@@ -2239,6 +2251,7 @@ addEventListener('keyup', (e) => {
 });
 
 function resize() {
+  if (typeof fixScroll === 'function') fixScroll();
   G.dpr = Math.min(2, window.devicePixelRatio || 1);
   cv.width = innerWidth * G.dpr;
   cv.height = innerHeight * G.dpr;
@@ -2960,6 +2973,8 @@ function startGame() {
   for (const t of keep) addCharm(t); // 上次诱惑的怪还跟着你
   S.charm = G.charmed.map((c) => c.type);
   if (S.pet && S.cls === 'spirit' && hasSk(S.pet.kind)) makePet(stats()); else S.pet = null; // 上次的召唤物还在
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  fixScroll(); setTimeout(fixScroll, 300);
   G.running = true;
   G.paused = false;
   G.auto = false;

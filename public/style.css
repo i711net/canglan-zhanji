@@ -214,3 +214,16 @@ html, body {
 #btnRand { right: 150px; bottom: 62px; background: rgba(70, 40, 130, .62); }
 /* 按钮下面的小字：血 / 魔 / 回 / 随 / 速 */
 .cbtn .lab { position: absolute; bottom: -15px; left: 50%; transform: translateX(-50%); font-size: 11px; font-weight: bold; color: #ffe9a8; text-shadow: 0 1px 2px #000, 0 0 3px #000; pointer-events: none; }
+
+/* 竖屏手机：技能栏一行最多 4 个、按钮小一点，不挤到左边的摇杆区 */
+@media (orientation: portrait) and (max-width: 520px) {
+  #skillBar { max-width: 196px; gap: 17px 4px; bottom: calc(env(safe-area-inset-bottom) + 210px); }
+  #menuBar { top: calc(env(safe-area-inset-top) + 84px); gap: 4px; }
+  .sbtn { width: 45px; height: 45px; font-size: 21px; }
+}
+html, body { overscroll-behavior: none; }
+/* 矮屏竖屏手机（如 iPhone SE）：菜单按钮改成顶部一排，给技能栏让出位置 */
+@media (orientation: portrait) and (max-height: 620px) {
+  #menuBar { flex-direction: row; top: calc(env(safe-area-inset-top) + 74px); right: 6px; gap: 4px; }
+  #menuBar button { width: 40px; height: 40px; font-size: 16px; }
+}
