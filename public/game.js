@@ -6,7 +6,7 @@
    ========================================================= */
 
 const API = '/api';
-const VERSION = '20261115a'; // 每次更新改这里和 index.html 里的 ?v=，手机就会加载新版
+const VERSION = '20261115b'; // 每次更新改这里和 index.html 里的 ?v=，手机就会加载新版
 const $ = (s) => document.querySelector(s);
 const rand = (a, b) => a + Math.random() * (b - a);
 const ri = (a, b) => Math.floor(rand(a, b + 1));
@@ -318,20 +318,23 @@ const SKILLS = {
     { id: 'flame', n: '炎刃', ic: '🔥', t: 'active', lv: 35, cd: 10, mp: 22, desc: (l) => `剑上起火猛劈一刀，伤害 ${320 + 40 * l}%` },
   ],
   mage: [
-    { id: 'fire', n: '火弹术', ic: '☄️', t: 'basic', lv: 1, desc: (l) => `普通攻击：发射火弹，伤害 ${100 + 8 * l}%` },
+    { id: 'fire', n: '火弹术', ic: '☄️', t: 'basic', lv: 1, desc: (l) => `普通攻击：发射火弹，伤害 ${100 + 15 * l}%，出手间隔 ${atkGap('mage', l)} 秒` },
     { id: 'push', n: '斥力环', ic: '💫', t: 'active', lv: 12, cd: 8, mp: 14, desc: (l) => `把身边的怪弹开并减速 2 秒，伤害 ${100 + 15 * l}%` },
-    { id: 'thunder', n: '落雷', ic: '⚡', t: 'active', lv: 17, cd: 3.5, mp: 18, desc: (l) => `雷劈最近的敌人，伤害 ${260 + 30 * l}%${l >= 1.5 ? `，再连锁劈中旁边 ${Math.round(l / 1.5)} 个敌人（一半伤害）` : ''}` },
+    { id: 'lure', n: '诱惑术', ic: '💞', t: 'active', lv: 13, cd: 6, mp: 16, desc: (l) => `诱惑一只比你等级低的怪（BOSS、红名除外）替你作战，最多同时 ${Math.round(l / 1.5) + 1} 只，成功率 ${lureRate(Math.round(l / 1.5))}%` },
+    { id: 'thunder', n: '落雷', ic: '⚡', t: 'active', lv: 17, cd: 3.5, mp: 18, desc: (l) => `雷劈最近的敌人，伤害 ${260 + 40 * l}%${l >= 1.5 ? `，再连锁劈中旁边 ${Math.round(l / 1.5)} 个敌人（一半伤害）` : ''}` },
     { id: 'bigfire', n: '烈焰弹', ic: '🔥', t: 'passive', lv: 19, desc: (l) => `被动：火弹变大，伤害再 +${25 + 10 * l}%` },
-    { id: 'wall', n: '火墙', ic: '🧱', t: 'active', lv: 24, cd: 12, mp: 30, desc: (l) => `在敌人脚下烧起一片火 8 秒（阶越高范围越大），每跳伤害 ${50 + 8 * l}%` },
+    { id: 'wall', n: '火墙', ic: '🧱', t: 'active', lv: 24, cd: 12, mp: 30, desc: (l) => `在敌人脚下烧起一片火 8 秒（阶越高范围越大），每跳伤害 ${50 + 12 * l}%` },
     { id: 'ward', n: '灵盾', ic: '🛡️', t: 'active', lv: 31, cd: 30, mp: 40, desc: (l) => `15 秒内吸收 ${40 + 8 * l}% 生命上限的伤害` },
-    { id: 'ice', n: '冰暴', ic: '❄️', t: 'active', lv: 35, cd: 9, mp: 45, desc: (l) => `冰雹砸向一片敌人，伤害 ${240 + 30 * l}%，减速 3 秒` },
+    { id: 'ice', n: '冰暴', ic: '❄️', t: 'active', lv: 35, cd: 9, mp: 45, desc: (l) => `冰雹砸向一片敌人，伤害 ${240 + 40 * l}%，减速 3 秒` },
   ],
   spirit: [
-    { id: 'charm', n: '灵符', ic: '📜', t: 'basic', lv: 1, desc: (l) => `普通攻击：掷出灵符，伤害 ${100 + 8 * l}%` },
-    { id: 'heal', n: '治愈术', ic: '💚', t: 'active', lv: 7, cd: 8, mp: 14, desc: (l) => `5 秒内给自己和召唤物回复 ${30 + 6 * l}% 生命` },
-    { id: 'venom', n: '蚀毒术', ic: '☠️', t: 'active', lv: 14, cd: 9, mp: 18, desc: (l) => `附近敌人中毒 8 秒：每秒掉 ${30 + 6 * l}% 道术的血，防御 -30%` },
+    { id: 'charm', n: '灵符', ic: '📜', t: 'basic', lv: 1, desc: (l) => `普通攻击：掷出灵符，伤害 ${100 + 15 * l}%，出手间隔 ${atkGap('spirit', l)} 秒` },
+    { id: 'heal', n: '治愈术', ic: '💚', t: 'active', lv: 7, cd: 8, mp: 14, desc: (l) => `5 秒内给自己和召唤物回复 ${30 + 8 * l}% 生命` },
+    { id: 'venom', n: '蚀毒术', ic: '☠️', t: 'active', lv: 14, cd: 9, mp: 18, desc: (l) => `附近敌人中毒 8 秒：每秒掉 ${30 + 10 * l}% 道术的血，防御 -30%` },
     { id: 'bone', n: '唤骨卫', ic: '💀', t: 'active', lv: 19, cd: 20, mp: 30, desc: (l) => `召唤骨卫助战（攻击为你的 ${55 + 8 * l}%），怪被它打到会转去打它。这一阶的骨卫最高练到 ${PET_CAP[Math.round(l / 1.5)]} 级` },
-    { id: 'armor', n: '灵甲术', ic: '🔰', t: 'active', lv: 25, cd: 30, mp: 30, desc: (l) => `20 秒内防御 +${30 + 8 * l}%` },
+    { id: 'hide', n: '隐身术', ic: '👻', t: 'active', lv: 20, cd: 20, mp: 20, noauto: true, desc: (l) => `${hideDur(l)} 秒内怪物看不见你（BOSS、红名能看穿）；你打了哪只怪，那只就能看见你` },
+    { id: 'massHide', n: '集体隐身术', ic: '🌫️', t: 'active', lv: 21, cd: 30, mp: 35, noauto: true, desc: (l) => `你和召唤物一起隐身 ${hideDur(l)} 秒；隐身期间召唤物不主动出手，适合直接穿过怪群` },
+    { id: 'armor', n: '灵甲术', ic: '🔰', t: 'active', lv: 25, cd: 30, mp: 30, desc: (l) => `20 秒内防御 +${30 + 10 * l}%` },
     { id: 'beast', n: '唤灵兽', ic: '🐅', t: 'active', lv: 35, cd: 25, mp: 50, desc: (l) => `召唤灵兽（攻击为你的 ${85 + 10 * l}%，血很厚），顶替骨卫。这一阶的灵兽最高练到 ${PET_CAP[Math.round(l / 1.5)]} 级` },
   ],
 };
@@ -353,6 +356,12 @@ const rankNeedLv = (sk, r) => sk.lv + RANK_LV[r];
 const hasSk = (id) => !!S.sk[id];
 const skillCost = (sk) => Math.round(sk.mp * (1 + S.lv / 25));
 const activeSkills = () => mySkills().filter((sk) => sk.t === 'active' && hasSk(sk.id));
+// 每进一阶冷却缩短 15%（初级 100%、中级 85%、高级 70%）
+const skCd = (sk, r) => Math.round(sk.cd * (1 - 0.15 * Math.max(0, r)) * 10) / 10;
+// 法师、灵使普攻的出手间隔：每进一阶快 8%
+const atkGap = (cls, l) => Math.round(CLASSES[cls].atkCd * (1 - 0.08 * Math.round(Math.max(0, l) / 1.5)) * 100) / 100;
+const hideDur = (l) => 30 + 20 * l; // 隐身时长：30 / 60 / 90 秒
+const lureRate = (r) => 45 + 15 * r; // 诱惑成功率：45 / 60 / 75%
 const bookPrice = (sk) => (sk.lv <= 20 ? 200 + sk.lv * 150 : sk.lv * sk.lv * 40);
 for (const sk of Object.values(SKILL_BY_ID)) ITEMS['book_' + sk.id] = { n: '《' + sk.n + '》', ic: '📕', p: Math.round(bookPrice(sk) / 4), book: sk.id };
 // 用技能涨熟练度。练满后不会自动升阶，要去书架买下一阶的书
@@ -484,7 +493,7 @@ function newSave(nick) {
     v: 2, name: nick || '勇者', cls: '', lv: 1, exp: 0, hp: 100, gold: 30,
     inv: { potion_s: 10, mana_s: 10, scroll_town: 3 },
     equip: {}, gear: [], sk: {}, opt: { autoSell: false, autoHp: 50, autoMp: 30, autoTown: false },
-    pet: null, petGrow: { atk: 0, hp: 0, def: 0 },
+    pet: null, petGrow: { atk: 0, hp: 0, def: 0 }, charm: [],
     house: { tier: 0, prod: {}, fac: {} },
     shopLv: 1,
     spd: { m: 1, until: 0 },
@@ -505,6 +514,7 @@ function fixSave(d, nick) {
   s.gear = Array.isArray(s.gear) ? s.gear.filter(okGear) : [];
   s.opt = Object.assign({ autoSell: false, autoHp: 50, autoMp: 30, autoTown: false }, s.opt);
   s.petGrow = Object.assign({ atk: 0, hp: 0, def: 0 }, s.petGrow);
+  s.charm = Array.isArray(s.charm) ? s.charm.filter((t) => MONS[t] && !MONS[t].boss).slice(0, 3) : [];
   if (s.pet && !(s.pet.kind === 'bone' || s.pet.kind === 'beast')) s.pet = null;
   s.sk = Object.assign({}, s.sk);
   for (const k of Object.keys(s.sk)) if (!SKILL_BY_ID[k] || !s.sk[k]) delete s.sk[k];
@@ -689,7 +699,7 @@ const cv = $('#cv');
 const ctx = cv.getContext('2d');
 const G = {
   running: false, paused: false, zone: 'village', player: null,
-  enemies: [], nodes: [], decor: [], tufts: [], texts: [], fx: [], npcs: [], critters: [], proj: [], warns: [], loot: [], pproj: [], walls: [], pet: null, auto: false, autoTgt: null,
+  enemies: [], nodes: [], decor: [], tufts: [], texts: [], fx: [], npcs: [], critters: [], proj: [], warns: [], loot: [], pproj: [], walls: [], pet: null, charmed: [], auto: false, autoTgt: null,
   respawns: [], cam: { x: 0, y: 0 }, scale: 1, dpr: 1, vw: 0, vh: 0,
   near: null, atkHeld: false, keys: {}, joy: { x: 0, y: 0, id: null }, t: 0, deadT: 0,
 };
@@ -778,6 +788,8 @@ function enterZone(id, silent, from) {
     for (let i = 0; i < (z.lv >= 25 ? 2 : z.lv >= 10 ? 1 : 0); i++) spawnRogue();
   }
   if (G.pet) { G.pet.x = p.x + 30; G.pet.y = p.y + 10; } // 召唤物跟着换地图
+  for (const a of G.charmed) { a.x = p.x + rand(-50, 50); a.y = p.y + rand(15, 50); }
+  p.invis = 0; p.invisAll = false;
   updateHud();
   if (!silent) toast(`📍 进入「${z.n}」`);
 }
@@ -864,7 +876,8 @@ function playerAttack() {
   p.dir = Math.atan2(best.y - p.y, best.x - p.x);
   if (C.bolt) {
     const basic = S.cls === 'mage' ? 'fire' : 'charm';
-    let k = 1 + 0.08 * Math.max(0, skLv(basic));
+    let k = 1 + 0.15 * Math.max(0, skLv(basic));
+    p.atkCd = atkGap(S.cls, skLv(basic));
     if (hasSk('bigfire')) { k += 0.25 + 0.1 * skLv('bigfire'); trainSkill('bigfire'); }
     trainSkill(basic);
     G.pproj.push({ x: p.x + p.face * 12, y: p.y - 22, e: best, atk: st.atk * k, c: C.bolt, life: 1.5, big: hasSk('bigfire') });
@@ -931,7 +944,7 @@ function castSkill(id, auto) {
         e.x = clamp(e.x + Math.cos(a) * push, 20, z.w - 20); e.y = clamp(e.y + Math.sin(a) * push, 20, z.h - 20);
         if (r >= 1) for (const o of G.enemies.filter((o) => o !== e && dist(o, e) < 70 + o.m.size)) { o.slow = 2; hitEnemy(o, st.atk * (1 + 0.2 * l), st); }
       }
-      hitEnemy(e, st.atk * (2.6 + 0.3 * l), st);
+      hitEnemy(e, st.atk * (2.6 + 0.4 * l), st);
       break;
     }
     case 'flame': {
@@ -949,14 +962,14 @@ function castSkill(id, auto) {
       G.fx.push({ k: 'bolt', x: e.x, y: e.y, t: 0, life: 0.3 });
       // 中级起连锁：再劈中旁边 1 个（高级 2 个），一半伤害
       const chain = G.enemies.filter((o) => o !== e && dist(o, e) < 180 + o.m.size).slice(0, skRank('thunder'));
-      for (const o of chain) { G.fx.push({ k: 'bolt', x: o.x, y: o.y, t: 0, life: 0.3 }); hitEnemy(o, st.atk * (2.6 + 0.3 * l) * 0.5, st); }
-      hitEnemy(e, st.atk * (2.6 + 0.3 * l), st);
+      for (const o of chain) { G.fx.push({ k: 'bolt', x: o.x, y: o.y, t: 0, life: 0.3 }); hitEnemy(o, st.atk * (2.6 + 0.4 * l) * 0.5, st); }
+      hitEnemy(e, st.atk * (2.6 + 0.4 * l), st);
       break;
     }
     case 'wall': {
       const e = nearestEnemy(340);
       if (!e) return say('附近没有敌人');
-      G.walls.push({ x: e.x, y: e.y, r: 95 + skRank('wall') * 20, t: 8, tk: 0, k: 0.5 + 0.08 * l });
+      G.walls.push({ x: e.x, y: e.y, r: 95 + skRank('wall') * 20, t: 8, tk: 0, k: 0.5 + 0.12 * l });
       break;
     }
     case 'ice': {
@@ -964,7 +977,7 @@ function castSkill(id, auto) {
       if (!e) return say('附近没有敌人');
       G.fx.push({ k: 'ring', x: e.x, y: e.y, t: 0, life: 0.5, r: 150, c: '#9fe8ff' });
       G.fx.push({ k: 'puff', x: e.x, y: e.y, t: 0, life: 0.5, r: 120 });
-      for (const o of G.enemies.filter((o) => dist(o, e) < 140 + o.m.size)) { o.slow = 3; hitEnemy(o, st.atk * (2.4 + 0.3 * l), st); }
+      for (const o of G.enemies.filter((o) => dist(o, e) < 140 + o.m.size)) { o.slow = 3; hitEnemy(o, st.atk * (2.4 + 0.4 * l), st); }
       break;
     }
     case 'ward':
@@ -974,7 +987,7 @@ function castSkill(id, auto) {
       break;
     case 'heal':
       if (auto && p.hp > st.maxHp * 0.7 && !(G.pet && G.pet.hp < G.pet.maxHp * 0.5)) return false;
-      p.mend = 5; p.mendK = 0.3 + 0.06 * l;
+      p.mend = 5; p.mendK = 0.3 + 0.08 * l;
       floatText(p.x, p.y - 56, '治愈', '#7dff8a', 16);
       break;
     case 'venom': {
@@ -982,7 +995,7 @@ function castSkill(id, auto) {
       if (!hit.length) return say('附近没有敌人');
       if (auto && hit.every((e) => e.poison > 2)) return false;
       G.fx.push({ k: 'ring', x: p.x, y: p.y, t: 0, life: 0.5, r: 240, c: '#8ae06a' });
-      for (const e of hit) { e.poison = 8; e.pdmg = Math.round(st.atk * (0.3 + 0.06 * l)); e.ptk = 0; e.aggro = true; }
+      for (const e of hit) { e.poison = 8; e.pdmg = Math.round(st.atk * (0.3 + 0.1 * l)); e.ptk = 0; e.aggro = true; }
       break;
     }
     case 'bone':
@@ -995,20 +1008,53 @@ function castSkill(id, auto) {
       if (G.pet && G.pet.kind === 'beast') return say('灵兽还在（重新召唤等级会清零）');
       summonPet(st, 'beast', l);
       break;
+    case 'lure': {
+      const cap = skRank('lure') + 1;
+      if (G.charmed.length >= cap) return say(`最多同时诱惑 ${cap} 只（进阶可以多带）`);
+      let e = null, bd = 320;
+      for (const o of G.enemies) {
+        if (o.m.boss || o.m.rogue || o.m.lv >= S.lv) continue;
+        const d = dist(p, o) - o.m.size;
+        if (d < bd) { bd = d; e = o; }
+      }
+      if (!e) return say('附近没有能诱惑的怪（要比你等级低，BOSS、红名不行）');
+      G.fx.push({ k: 'ring', x: e.x, y: e.y, t: 0, life: 0.5, r: 50, c: '#ff8ad8' });
+      if (Math.random() * 100 >= lureRate(skRank('lure'))) { floatText(e.x, e.y - 40, '诱惑失败', '#ff8ad8', 14); e.aggro = true; break; }
+      G.enemies.splice(G.enemies.indexOf(e), 1);
+      G.respawns.push({ type: e.type, t: 7, nest: e.nest, x: e.sx, y: e.sy }); // 地图上的怪数量补回来
+      if (G.autoTgt === e) G.autoTgt = null;
+      for (const o of G.enemies) if (o.tgt === e) o.tgt = null;
+      addCharm(e.type, e.hp);
+      floatText(e.x, e.y - 40, '诱惑成功！', '#ff8ad8', 15);
+      break;
+    }
+    case 'hide': case 'massHide': {
+      if (p.invis > 0 && !(id === 'massHide' && !p.invisAll)) return say('已经在隐身了');
+      p.invis = hideDur(l); p.invisAll = id === 'massHide';
+      for (const e of G.enemies) {
+        e.seen = false;
+        // 正在追你（或追召唤物，集体隐身时）的怪跟丢了
+        if (!e.m.boss && !e.m.rogue && (!e.tgt || p.invisAll)) { e.aggro = false; e.tgt = null; e.tx = e.sx; e.ty = e.sy; }
+      }
+      G.autoTgt = null;
+      G.fx.push({ k: 'puff', x: p.x, y: p.y, t: 0, life: 0.5, r: 40 });
+      toast(`${sk.ic} ${sk.n}：${Math.round(p.invis)} 秒`);
+      break;
+    }
     case 'armor':
       if (auto && (p.armorT > 0 || !nearestEnemy(300))) return false;
-      p.armorT = 20; p.armorK = 0.3 + 0.08 * l;
+      p.armorT = 20; p.armorK = 0.3 + 0.1 * l;
       floatText(p.x, p.y - 56, `灵甲 防御 +${Math.round(p.armorK * 100)}%`, '#ffe08a', 15);
       break;
   }
   p.mp -= cost;
-  p.cds[id] = sk.cd;
+  p.cds[id] = skCd(sk, skRank(id));
   trainSkill(id, 3);
   updateHud();
   return true;
 }
 // src：'pet' 灵兽打的（怪会转去咬灵兽）；'dot' 中毒掉血（无视防御、不暴击、不击退）
-function hitEnemy(e, atk, st, src) {
+function hitEnemy(e, atk, st, src, ally) {
   let dmg, crit = false;
   if (src === 'dot') dmg = Math.max(1, Math.round(atk));
   else {
@@ -1019,10 +1065,11 @@ function hitEnemy(e, atk, st, src) {
   e.hp -= dmg;
   e.flash = 0.12;
   e.aggro = true;
-  const pet = src === 'pet' && G.pet;
-  if (pet) { e.tgt = G.pet; e.petHit = true; }
+  const pet = src === 'pet' && (ally || G.pet);
+  if (pet) { e.tgt = pet; if (pet === G.pet) e.petHit = true; }
+  else e.seen = true; // 你亲手打了它，隐身也会被它看见
   if (src !== 'dot' && src !== 'wall' && !e.m.boss) {
-    const o = pet ? G.pet : G.player;
+    const o = pet || G.player;
     const ang = Math.atan2(e.y - o.y, e.x - o.x);
     e.x += Math.cos(ang) * 10; e.y += Math.sin(ang) * 10;
   }
@@ -1081,6 +1128,21 @@ function petGain(n) {
   markDirty();
 }
 function losePet() { G.pet = null; S.pet = null; markDirty(); }
+// 法师诱惑来的怪：G.charmed 里的每一只和召唤物一样跟着你打怪；S.charm 记着它们是什么怪，换地图、重新登录都还在
+const allies = () => (G.pet ? [G.pet, ...G.charmed] : G.charmed);
+function addCharm(type, hp) {
+  const m = MONS[type], p = G.player;
+  const a = { kind: 'lure', type, n: m.n, ic: m.ic, size: m.size, x: p.x + rand(-40, 40), y: p.y + rand(10, 40), hp: hp || m.hp, maxHp: m.hp, atk: m.atk, def: m.def, cd: 0, face: 1, flash: 0 };
+  a.hp = Math.min(a.hp, a.maxHp);
+  G.charmed.push(a);
+  S.charm = G.charmed.map((c) => c.type);
+  markDirty();
+}
+function loseCharm(a) {
+  G.charmed = G.charmed.filter((c) => c !== a);
+  S.charm = G.charmed.map((c) => c.type);
+  markDirty();
+}
 function petPanelHtml() {
   const s = S.pet, pet = G.pet, g = S.petGrow;
   let h = `<div class="desc">召唤物参与打死的怪算<b>战功</b>（小怪 1、精英 3、红名 5、BOSS 20），攒够就升级，每级攻击、防御、生命 +10%。<b>召唤术的阶决定最高几级：初级 3 级、中级 5 级、高级 7 级</b>。召唤术的熟练度靠召唤物打怪来涨：它每打 2 下涨 1 点，不用让它死了重召。换地图、重新登录它都还在；<b style="color:#ff8f80">它战死或你战死，等级清零</b>。</div>`;
@@ -1107,12 +1169,33 @@ function dropBook() {
   give('book_' + sk.id, 1);
   toast(`📕 掉落技能书《${sk.n}》！到背包「物品」里学习`);
 }
-function hurtPet(dmg) {
-  const pet = G.pet;
+function hurtPet(dmg, a) {
+  const pet = a || G.pet;
   if (!pet) return;
   pet.hp -= dmg;
   pet.flash = 0.12;
   floatText(pet.x, pet.y - 30, '-' + dmg, '#ffb0a0', 12);
+}
+function updateCharmed(dt, st) {
+  const p = G.player, quiet = p.invis > 0 && p.invisAll;
+  for (const a of G.charmed.slice()) {
+    if (a.hp <= 0) { G.fx.push({ k: 'puff', x: a.x, y: a.y, t: 0, life: 0.45, r: 30 }); loseCharm(a); toast(`💞 诱惑的${a.n}死了`); continue; }
+    a.cd -= dt; a.flash -= dt;
+    a.hp = Math.min(a.maxHp, a.hp + a.maxHp * 0.01 * dt);
+    if (dist(a, p) > 700) { a.x = p.x + rand(-30, 30); a.y = p.y + rand(10, 30); }
+    let tgt = null, bd = 1e9;
+    if (!quiet) for (const e of G.enemies) {
+      if (!e.aggro || dist(p, e) > 420) continue;
+      const d = dist(a, e);
+      if (d < bd) { bd = d; tgt = e; }
+    }
+    const i = G.charmed.indexOf(a);
+    let tx = p.x - p.face * (50 + i * 22), ty = p.y + 30 - i * 18, stop = 10;
+    if (tgt) { tx = tgt.x; ty = tgt.y; stop = tgt.m.size + a.size; }
+    const dx = tx - a.x, dy = ty - a.y, dl = Math.hypot(dx, dy);
+    if (dl > stop) { a.x += (dx / dl) * 200 * dt; a.y += (dy / dl) * 200 * dt; if (Math.abs(dx) > 2) a.face = dx > 0 ? 1 : -1; }
+    if (tgt && dl <= stop + 8 && a.cd <= 0) { a.cd = 1; hitEnemy(tgt, a.atk, st, 'pet', a); trainSkill('lure'); }
+  }
 }
 function updatePet(dt, st) {
   const pet = G.pet, p = G.player;
@@ -1128,7 +1211,7 @@ function updatePet(dt, st) {
   pet.hp = Math.min(pet.maxHp, pet.hp + pet.maxHp * 0.01 * dt);
   if (dist(pet, p) > 700) { pet.x = p.x; pet.y = p.y; }
   let tgt = null, bd = 1e9;
-  for (const e of G.enemies) {
+  if (!(p.invis > 0 && p.invisAll)) for (const e of G.enemies) { // 集体隐身时召唤物不主动出手
     if (!e.aggro || dist(p, e) > 420) continue;
     const d = dist(pet, e);
     if (d < bd) { bd = d; tgt = e; }
@@ -1142,7 +1225,7 @@ function updatePet(dt, st) {
   }
   if (tgt && dl <= stop + 8 && pet.cd <= 0) {
     pet.cd = 0.9;
-    hitEnemy(tgt, pet.atk, st, 'pet');
+    hitEnemy(tgt, pet.atk, st, 'pet', pet);
     // 召唤物每打 2 下，召唤术涨 1 点熟练度（不用让它死了重召来练）
     pet.hits = (pet.hits || 0) + 1;
     if (pet.hits % 2 === 0) trainSkill(pet.kind);
@@ -1231,7 +1314,7 @@ function protect(st) {
 }
 function autoUse(st) {
   const p = G.player;
-  if (G.autoTgt && dist(p, G.autoTgt) < 400) for (const sk of activeSkills()) castSkill(sk.id, true);
+  if (G.autoTgt && dist(p, G.autoTgt) < 400) for (const sk of activeSkills()) if (!sk.noauto) castSkill(sk.id, true);
 }
 function toggleAuto(on) {
   G.auto = on === undefined ? !G.auto : on;
@@ -1297,7 +1380,7 @@ function hurtPlayer(dmg) {
   if (p.hp <= 0) {
     p.hp = 0;
     G.deadT = 2;
-    losePet(); p.armorT = 0; p.ward = 0; p.mend = 0;
+    losePet(); G.charmed = []; S.charm = []; p.armorT = 0; p.ward = 0; p.mend = 0; p.invis = 0;
     const lost = Math.floor(S.gold * 0.1);
     S.gold -= lost;
     S.stat.deaths++;
@@ -1361,6 +1444,7 @@ function useScroll(k) {
     while (tries < 40 && G.enemies.some((e) => Math.hypot(e.x - x, e.y - y) < 140));
     p.x = x; p.y = y;
     if (G.pet) { G.pet.x = x + 30; G.pet.y = y + 10; }
+    for (const a of G.charmed) { a.x = x + rand(-50, 50); a.y = y + rand(15, 50); }
     G.autoTgt = null;
     G.fx.push({ k: 'puff', x, y, t: 0, life: 0.45, r: 40 });
   }
@@ -1637,7 +1721,7 @@ const PANELS = {
       const top = k.l >= 2, full = !top && k.x >= SK_PTS[k.l];
       const prog = top ? '已是最高阶' : full ? `已练满 · Lv.${rankNeedLv(sk, k.l + 1)} 可到书架买${RANK_N[k.l + 1]}书进阶` : `熟练度 ${k.x}/${SK_PTS[k.l]}`;
       h += `<div class="row"><div class="ic">${sk.ic}</div><div class="info"><b>${sk.n} · ${RANK_N[k.l]}</b> <small style="display:inline">（${tag}）</small><small>${sk.desc(k.l * 1.5)}</small>
-        ${sk.t === 'active' ? `<small>冷却 ${sk.cd} 秒 · 灵力 ${skillCost(sk)}</small>` : ''}<div class="prog"><div style="width:${top ? 100 : Math.min(100, (k.x / SK_PTS[k.l]) * 100)}%"></div></div><small>${prog}</small></div></div>`;
+        ${sk.t === 'active' ? `<small>冷却 ${skCd(sk, k.l)} 秒 · 灵力 ${skillCost(sk)}</small>` : ''}<div class="prog"><div style="width:${top ? 100 : Math.min(100, (k.x / SK_PTS[k.l]) * 100)}%"></div></div><small>${prog}</small></div></div>`;
     }
     return { title: '🧝 ' + S.name, html: h };
   },
@@ -1695,7 +1779,7 @@ const PANELS = {
         const r = k.l + 1, needLv = rankNeedLv(sk, r), price = rankPrice(sk, r), full = k.x >= SK_PTS[k.l];
         const why = !full ? `熟练 ${k.x}/${SK_PTS[k.l]}` : S.lv < needLv ? 'Lv.' + needLv : '';
         const btn = why ? `<button class="btn" disabled>${why}</button>` : `<button class="btn primary" data-act="rankup:${sk.id}" ${S.gold >= price ? '' : 'disabled'}>进阶</button>`;
-        h += `<div class="row"><div class="ic">${sk.ic}</div><div class="info"><b>《${sk.n}·${RANK_N[r]}》</b> <small style="display:inline">（现在${RANK_N[k.l]}）</small><small>进阶后：${sk.desc(r * 1.5)}</small><small>需要 Lv.${needLv}、${RANK_N[k.l]}熟练度练满 · ${fmt(price)} 金币</small></div><div class="acts">${btn}</div></div>`;
+        h += `<div class="row"><div class="ic">${sk.ic}</div><div class="info"><b>《${sk.n}·${RANK_N[r]}》</b> <small style="display:inline">（现在${RANK_N[k.l]}）</small><small>进阶后：${sk.desc(r * 1.5)}${sk.t === 'active' ? `；冷却 ${skCd(sk, k.l)} → ${skCd(sk, r)} 秒` : ''}</small><small>需要 Lv.${needLv}、${RANK_N[k.l]}熟练度练满 · ${fmt(price)} 金币</small></div><div class="acts">${btn}</div></div>`;
       }
       return { title: '🏪 ' + SL.n, html: h };
     }
@@ -2219,10 +2303,13 @@ function update(dt) {
     const m = e.m;
     e.flash -= dt; e.cd -= dt;
     // tg：这只怪现在追的目标——被灵兽打过就去咬灵兽，否则追玩家
-    const tg = e.tgt && e.tgt === G.pet && G.pet.hp > 0 ? G.pet : p;
+    const tg = e.tgt && e.tgt.hp > 0 && allies().includes(e.tgt) ? e.tgt : p;
     if (tg === p) e.tgt = null;
     const d = dist(tg, e);
-    if (!e.aggro && !m.passive && dist(p, e) < (m.boss ? 320 : m.rogue ? 260 : 190)) e.aggro = true;
+    // 隐身：普通怪看不见你（BOSS、红名能看穿；被你打过的那只也能看见）
+    const blind = p.invis > 0 && !m.boss && !m.rogue && !e.seen;
+    if (blind && e.aggro && (tg === p || p.invisAll)) { e.aggro = false; e.tgt = null; e.tx = e.sx; e.ty = e.sy; }
+    if (!e.aggro && !m.passive && !blind && dist(p, e) < (m.boss ? 320 : m.rogue ? 260 : 190)) e.aggro = true;
     if (e.aggro && Math.hypot(e.x - e.sx, e.y - e.sy) > 650) { e.aggro = false; e.tgt = null; e.tx = e.sx; e.ty = e.sy; e.hp = Math.min(m.hp, e.hp + m.hp * 0.3); }
     let tx, ty, spd = m.spd * (e.slow > 0 ? 0.5 : 1);
     if (e.slow > 0) e.slow -= dt;
@@ -2254,7 +2341,7 @@ function update(dt) {
         tx = e.x; ty = e.y;
         if (e.cd <= 0) {
           e.cd = m.boss ? 1.6 : 1.25;
-          if (tg === p) hurtPlayer(dmgTo()); else hurtPet(dmgTo());
+          if (tg === p) hurtPlayer(dmgTo()); else hurtPet(dmgTo(), tg);
           if (m.boss) G.fx.push({ k: 'ring', x: e.x, y: e.y, t: 0, life: 0.4, r: 90, c: '#ff6a2a' });
         }
       }
@@ -2309,6 +2396,8 @@ function update(dt) {
   }
   G.walls = G.walls.filter((w) => w.t > 0);
   updatePet(dt, st);
+  updateCharmed(dt, st);
+  if (p.invis > 0 && (p.invis -= dt) <= 0) { p.invis = 0; p.invisAll = false; toast('👻 隐身结束了'); }
   // 玩家的弹丸：追着目标飞
   for (const b of G.pproj) {
     b.life -= dt;
@@ -2325,7 +2414,7 @@ function update(dt) {
   for (const b of G.proj) {
     b.x += b.vx * dt; b.y += b.vy * dt; b.life -= dt;
     if (b.life > 0 && Math.hypot(b.x - p.x, b.y - (p.y - 18)) < 20) { b.life = 0; hurtPlayer(b.dmg); }
-    else if (b.life > 0 && G.pet && Math.hypot(b.x - G.pet.x, b.y - (G.pet.y - 10)) < 20) { b.life = 0; hurtPet(b.dmg); }
+    else if (b.life > 0) for (const a of allies()) if (Math.hypot(b.x - a.x, b.y - (a.y - 10)) < 20) { b.life = 0; hurtPet(b.dmg, a); break; }
   }
   G.proj = G.proj.filter((b) => b.life > 0);
   // 红圈预警
@@ -2333,7 +2422,7 @@ function update(dt) {
     w.t -= dt;
     if (w.t <= 0) {
       if (Math.hypot(p.x - w.x, p.y - w.y) < w.r) hurtPlayer(w.dmg);
-      if (G.pet && Math.hypot(G.pet.x - w.x, G.pet.y - w.y) < w.r) hurtPet(w.dmg);
+      for (const a of allies()) if (Math.hypot(a.x - w.x, a.y - w.y) < w.r) hurtPet(w.dmg, a);
       G.fx.push({ k: 'ring', x: w.x, y: w.y + 10, t: 0, life: 0.45, r: w.r * 1.1, c: '#ff4a2a' });
     }
   }
@@ -2529,7 +2618,9 @@ function drawPlayer(p) {
     ctx.fillStyle = `rgba(255,210,90,${0.25 + Math.sin(G.t * 8) * 0.1})`;
     ctx.beginPath(); ctx.ellipse(p.x, p.y + 2, 26, 11, 0, 0, Math.PI * 2); ctx.fill();
   }
+  if (p.invis > 0) ctx.globalAlpha = 0.4; // 隐身时半透明
   drawHuman(p.x, p.y, { face: p.face, bob: p.moving ? Math.sin(p.step) * 2 : 0, body: TIER_COL[aT], wpn: WPN_COL[wT], cls, swing: p.swing, hurt: p.hurt > 0 });
+  ctx.globalAlpha = 1;
   if (p.ward > 0) { // 灵盾：蓝色护罩
     ctx.strokeStyle = `rgba(140,210,255,${0.6 + Math.sin(G.t * 6) * 0.2})`; ctx.lineWidth = 2.5;
     ctx.fillStyle = 'rgba(140,210,255,.14)';
@@ -2575,9 +2666,18 @@ function drawRogue(e) {
   if (e.poison > 0) emoji('☠️', e.x + 22, e.y - 40, 12);
   if (e.slow > 0) emoji('❄️', e.x - 22, e.y - 40, 12);
 }
+function drawCharm(a) {
+  shadow(a.x, a.y + 4, a.size * 0.8);
+  ctx.globalAlpha = (a.flash > 0 ? 0.5 : 1) * (G.player.invis > 0 && G.player.invisAll ? 0.45 : 1);
+  emoji(a.ic, a.x, a.y - a.size * 0.4 + Math.sin(G.t * 6 + a.x) * 1.5, a.size * 1.5, a.face > 0);
+  ctx.globalAlpha = 1;
+  label('💞' + a.n, a.x, a.y - a.size - 22, '#ffb0e6', 11);
+  ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(a.x - 18, a.y - a.size - 14, 36, 4);
+  ctx.fillStyle = '#ff8ad8'; ctx.fillRect(a.x - 18, a.y - a.size - 14, (36 * Math.max(0, a.hp)) / a.maxHp, 4);
+}
 function drawPet(pet) {
   shadow(pet.x, pet.y + 6, 14);
-  ctx.globalAlpha = pet.flash > 0 ? 0.5 : 1;
+  ctx.globalAlpha = (pet.flash > 0 ? 0.5 : 1) * (G.player.invis > 0 && G.player.invisAll ? 0.45 : 1);
   emoji(pet.ic, pet.x, pet.y - 8 + Math.sin(G.t * 7) * 1.5, pet.kind === 'beast' ? 38 : 30, pet.face > 0);
   ctx.globalAlpha = 1;
   label(pet.n + (S.pet && S.pet.lv ? ' Lv' + S.pet.lv : ''), pet.x, pet.y - 36, S.pet && S.pet.lv >= 7 ? '#ffe08a' : '#bfe6ff', 11);
@@ -2769,6 +2869,7 @@ function render() {
   for (const e of G.enemies) if (vis(e)) list.push({ y: e.y, f: () => drawEnemy(e) });
   for (const l of G.loot) if (vis(l)) list.push({ y: l.y - 6, f: () => drawLoot(l) });
   if (G.pet) list.push({ y: G.pet.y, f: () => drawPet(G.pet) });
+  for (const a of G.charmed) list.push({ y: a.y, f: () => drawCharm(a) });
   list.push({ y: p.y, f: () => drawPlayer(p) });
   list.sort((a, b) => a.y - b.y);
   for (const it of list) it.f();
@@ -2849,8 +2950,11 @@ function startGame() {
   resize();
   initPlayer();
   fillQuests();
-  G.pet = null;
+  G.pet = null; G.charmed = [];
   enterZone('village', true);
+  const keep = S.cls === 'mage' && hasSk('lure') ? S.charm.slice(0, skRank('lure') + 1) : [];
+  for (const t of keep) addCharm(t); // 上次诱惑的怪还跟着你
+  S.charm = G.charmed.map((c) => c.type);
   if (S.pet && S.cls === 'spirit' && hasSk(S.pet.kind)) makePet(stats()); else S.pet = null; // 上次的召唤物还在
   G.running = true;
   G.paused = false;
