@@ -935,6 +935,8 @@ const ARCH_TOP = { quad: 40, bird: 30, eagle: 40, snake: 16, worm: 22, centi: 22
 function drawCreature(type, x, y, size, face, opts) {
   const o = MART[type];
   if (!o) return null;
+  // 诱惑来的跟班、召唤物身上没有 sx（出生点），飘动的怪要用它错开动画，没有就补一个
+  if (opts.e && !Number.isFinite(opts.e.sx)) opts.e.sx = (Math.random() * 1000) | 0;
   const k = size / ARCH_UNIT[o.a];
   const walk = opts.moving ? Math.sin(G.t * 10 + (opts.e ? opts.e.sx : x)) : 0;
   if (o.aura || opts.elite) {
@@ -1110,7 +1112,7 @@ function flame(x, y, h, ph, a) {
   ctx.fillStyle = `rgba(255,240,150,${a})`;
   ctx.beginPath(); ctx.moveTo(x - h * 0.15, y); ctx.quadraticCurveTo(x - h * 0.18, y - h * 0.3, x + Math.sin(ph) * h * 0.08, y - h * 0.55); ctx.quadraticCurveTo(x + h * 0.18, y - h * 0.3, x + h * 0.15, y); ctx.closePath(); ctx.fill();
 }
-render = function () {
+function renderScene() {
   const z = ZONES[G.zone], p = G.player;
   const dt = Math.max(0, Math.min(0.05, G.t - ART.lastT)); ART.lastT = G.t;
   ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -1270,4 +1272,14 @@ render = function () {
   }
   if (G.deadT > 0) { ctx.fillStyle = 'rgba(80,0,0,.35)'; ctx.fillRect(0, 0, W, H); }
   drawMinimap(z);
+}
+
+// 画面出错时只跳过这一帧，不让整个游戏卡死（第一次出错会记在控制台）
+render = function () {
+  try { renderScene(); }
+  catch (err) {
+    for (let i = 0; i < 30; i++) ctx.restore();
+    ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; ctx.setLineDash([]);
+    if (!ART.errLogged) { ART.errLogged = true; console.error('画面出错（已跳过）：', err); }
+  }
 };
