@@ -93,8 +93,9 @@ html, body {
 .cbtn.attack { width: 84px; height: 84px; right: 0; bottom: 0; font-size: 36px; background: rgba(170, 50, 40, .65); }
 .cbtn.mini { width: 50px; height: 50px; font-size: 21px; }
 .cbtn.mini span { font-size: 11px; position: absolute; bottom: 1px; text-shadow: 0 1px 2px #000; font-weight: bold; }
-#btnPotion { right: 94px; bottom: 2px; background: rgba(40, 130, 80, .6); }
-#btnMana { right: 84px; bottom: 60px; background: rgba(40, 90, 170, .6); }
+#btnPotion { right: 94px; bottom: 2px; background: rgba(120, 30, 30, .62); }
+#btnMana { right: 84px; bottom: 60px; background: rgba(30, 60, 140, .62); }
+#btnTown { right: 144px; bottom: 82px; background: rgba(110, 80, 40, .62); }
 #btnSpeed { right: 26px; bottom: 96px; background: rgba(30, 150, 190, .6); }
 #btnAuto { right: 152px; bottom: 26px; background: rgba(90, 90, 90, .6); }
 #btnSpeed.active { box-shadow: 0 0 14px 4px rgba(120, 230, 255, .8); border-color: #9feaff; }
@@ -207,3 +208,6 @@ html, body {
 .code-row input { flex: 1; min-width: 0; }
 .code-row .btn { white-space: nowrap; margin: 0 0 10px; }
 .forgot { display: inline-block; margin-top: 10px; font-size: 13px; color: #c9a55c; }
+
+/* 药瓶、卷轴按钮的图标 */
+.cbtn .pot { width: 26px; height: 30px; margin-top: -6px; pointer-events: none; }

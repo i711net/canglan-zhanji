@@ -6,7 +6,7 @@
    ========================================================= */
 
 const API = '/api';
-const VERSION = '20261112g'; // 每次更新改这里和 index.html 里的 ?v=，手机就会加载新版
+const VERSION = '20261115a'; // 每次更新改这里和 index.html 里的 ?v=，手机就会加载新版
 const $ = (s) => document.querySelector(s);
 const rand = (a, b) => a + Math.random() * (b - a);
 const ri = (a, b) => Math.floor(rand(a, b + 1));
@@ -69,16 +69,19 @@ const ITEMS = {
   upgrade_stone_2: { n: '高级强化石', ic: '💠', p: 120, quest: true },
   upgrade_stone_3: { n: '神圣强化石', ic: '🔱', p: 400, quest: true },
   upgrade_stone_4: { n: '至尊强化石', ic: '🌟', p: 1500, quest: true },
-  potion_s: { n: '小药水', ic: '🧪', p: 5, heal: 80 },
-  potion_m: { n: '中药水', ic: '⚗️', p: 20, heal: 260 },
-  potion_l: { n: '大药水', ic: '🍶', p: 60, heal: 700 },
-  potion_xl: { n: '特大药水', ic: '🏺', p: 150, heal: 2000 },
-  potion_xxl: { n: '神圣药水', ic: '💖', p: 400, heal: 5000 },
-  // 灵泉：回复灵力（放技能用）
-  mana_s: { n: '小灵泉', ic: '🔹', p: 5, mana: 60 },
-  mana_m: { n: '中灵泉', ic: '🔷', p: 20, mana: 220 },
-  mana_l: { n: '大灵泉', ic: '💙', p: 60, mana: 700 },
-  mana_xl: { n: '特大灵泉', ic: '🧿', p: 150, mana: 2000 },
+  potion_s: { n: '金创药(小)', ic: '🧪', p: 5, heal: 80 },
+  potion_m: { n: '金创药(中)', ic: '⚗️', p: 20, heal: 260 },
+  potion_l: { n: '强效金创药', ic: '🍶', p: 60, heal: 700 },
+  potion_xl: { n: '特效金创药', ic: '🏺', p: 150, heal: 2000 },
+  potion_xxl: { n: '万年雪参', ic: '💖', p: 400, heal: 5000 },
+  // 魔法药：回复灵力（放技能用）
+  mana_s: { n: '魔法药(小)', ic: '🔹', p: 5, mana: 60 },
+  mana_m: { n: '魔法药(中)', ic: '🔷', p: 20, mana: 220 },
+  mana_l: { n: '强效魔法药', ic: '💙', p: 60, mana: 700 },
+  mana_xl: { n: '特效魔法药', ic: '🧿', p: 150, mana: 2000 },
+  // 卷轴
+  scroll_town: { n: '回城卷', ic: '📜', p: 8, scroll: 'town' },
+  scroll_rand: { n: '随机传送卷', ic: '🌀', p: 10, scroll: 'rand' },
   // 加速饮料：只能在杂货铺买，不能出售
   speed_s: { n: '疾风饮料', ic: '🥤', p: 0, speed: 1.5, dur: 90, nosell: true },
   speed_l: { n: '狂风饮料', ic: '🧃', p: 0, speed: 2, dur: 90, nosell: true },
@@ -452,6 +455,8 @@ const expNeed = (lv) => Math.floor(20 * Math.pow(lv, 1.6) + 1.4 * Math.pow(lv, 3
 const SHOP_BUY = [
   { id: 'potion_s', price: 15, shop: 1 },
   { id: 'mana_s', price: 15, shop: 1 },
+  { id: 'scroll_town', price: 30, shop: 1 },
+  { id: 'scroll_rand', price: 40, shop: 1 },
   { id: 'wood', price: 8, shop: 1 },
   { id: 'stone', price: 10, shop: 1 },
   { id: 'potion_m', price: 60, shop: 2 },
@@ -477,8 +482,8 @@ let S = null; // 当前存档（会上传到云端）
 function newSave(nick) {
   return {
     v: 2, name: nick || '勇者', cls: '', lv: 1, exp: 0, hp: 100, gold: 30,
-    inv: { potion_s: 3, mana_s: 3 },
-    equip: {}, gear: [], sk: {}, opt: { autoSell: false },
+    inv: { potion_s: 10, mana_s: 10, scroll_town: 3 },
+    equip: {}, gear: [], sk: {}, opt: { autoSell: false, autoHp: 50, autoMp: 30, autoTown: false },
     pet: null, petGrow: { atk: 0, hp: 0, def: 0 },
     house: { tier: 0, prod: {}, fac: {} },
     shopLv: 1,
@@ -498,7 +503,7 @@ function fixSave(d, nick) {
   s.equip = Object.assign({}, s.equip);
   for (const k of Object.keys(s.equip)) if (!SLOTS.includes(k) || !okGear(s.equip[k])) delete s.equip[k];
   s.gear = Array.isArray(s.gear) ? s.gear.filter(okGear) : [];
-  s.opt = Object.assign({ autoSell: false }, s.opt);
+  s.opt = Object.assign({ autoSell: false, autoHp: 50, autoMp: 30, autoTown: false }, s.opt);
   s.petGrow = Object.assign({ atk: 0, hp: 0, def: 0 }, s.petGrow);
   if (s.pet && !(s.pet.kind === 'bone' || s.pet.kind === 'beast')) s.pet = null;
   s.sk = Object.assign({}, s.sk);
@@ -720,7 +725,7 @@ function take(k, n) {
 const canAfford = (cost) => Object.entries(cost).every(([k, v]) => has(k) >= v);
 const payCost = (cost) => Object.entries(cost).forEach(([k, v]) => take(k, v));
 const itemName = (k) => (k === 'gold' ? '金币' : ITEMS[k] ? ITEMS[k].n : k);
-const sellable = (k) => S.inv[k] > 0 && ITEMS[k] && !ITEMS[k].heal && !ITEMS[k].mana && !ITEMS[k].book && !ITEMS[k].quest && !ITEMS[k].nosell;
+const sellable = (k) => S.inv[k] > 0 && ITEMS[k] && !ITEMS[k].heal && !ITEMS[k].mana && !ITEMS[k].scroll && !ITEMS[k].book && !ITEMS[k].quest && !ITEMS[k].nosell;
 const sellPrice = (k) => Math.max(1, Math.floor(ITEMS[k].p * SHOP_LEVELS[S.shopLv].sell));
 const itemIc = (k) =>(k === 'gold' ? '💰' : ITEMS[k] ? ITEMS[k].ic : '❔');
 function needHtml(cost) {
@@ -889,7 +894,7 @@ function castSkill(id, auto) {
   if (p.cds[id] > 0) return false;
   if (z.safe) return say('城里不能放技能');
   const cost = skillCost(sk), l = skLv(id);
-  if (p.mp < cost) return say('灵力不足，喝瓶灵泉（🔹）');
+  if (p.mp < cost) return say('灵力不足，喝瓶魔法药');
   switch (id) {
     case 'arc': {
       const R = 115 + skRank('arc') * 20;
@@ -1216,10 +1221,16 @@ function autoMove() {
   }
   return null;
 }
+// 保护：不管开不开挂机，血 / 蓝低于设定就自动喝药；血太少可以自动用回城卷（在「设置」里调）
+function protect(st) {
+  const p = G.player, o = S.opt;
+  if (G.deadT > 0 || ZONES[G.zone].safe) return;
+  if (o.autoTown && p.hp < st.maxHp * 0.15 && has('scroll_town') > 0) { toast('⚠️ 血太少，自动回城'); useScroll('scroll_town'); return; }
+  if (o.autoHp && p.hp < st.maxHp * o.autoHp / 100) usePotion(true);
+  if (o.autoMp && p.mp < st.maxMp * o.autoMp / 100) useMana(true);
+}
 function autoUse(st) {
   const p = G.player;
-  if (p.hp < st.maxHp * 0.45) usePotion(true);
-  if (p.mp < st.maxMp * 0.25) useMana(true);
   if (G.autoTgt && dist(p, G.autoTgt) < 400) for (const sk of activeSkills()) castSkill(sk.id, true);
 }
 function toggleAuto(on) {
@@ -1242,6 +1253,10 @@ function killEnemy(e) {
   if (zl >= 15 && Math.random() < 0.03 * rare) { give('upgrade_stone_2', 1); got.push('upgrade_stone_2'); }
   if (zl >= 25 && Math.random() < 0.015 * rare) { give('upgrade_stone_3', 1); got.push('upgrade_stone_3'); }
   if (zl >= 35 && Math.random() < 0.01 * rare) { give('upgrade_stone_4', 1); got.push('upgrade_stone_4'); }
+  // 药和卷轴（精英怪掉得多些）：按地图等级掉对应档次的金创药 / 魔法药
+  const pt = zl < 15 ? 0 : zl < 30 ? 1 : zl < 45 ? 2 : 3;
+  const cons = [[POTION_ORDER[pt], 0.05], [MANA_ORDER[pt], 0.04], ['scroll_town', 0.012], ['scroll_rand', 0.008], ['speed_s', 0.004]];
+  for (const [k, ch] of cons) if (Math.random() < ch * rare * (m.boss ? 10 : 1)) { give(k, 1); got.push(k); }
   // 装备掉落：落在地上，走过去捡。BOSS 必掉 3 件，有机会掉高一档的
   const tier = gearTierOf(G.zone);
   if (Math.random() < (m.boss ? 1 : m.rogue ? 0.3 : m.elite ? 0.03 : 0)) dropBook();
@@ -1301,7 +1316,7 @@ function usePotion(quiet) {
   let chosen = null;
   for (const k of order) if (has(k) > 0 && ITEMS[k].heal >= missing * 0.7) { chosen = k; break; }
   if (!chosen) for (const k of order.slice().reverse()) if (has(k) > 0) { chosen = k; break; }
-  if (!chosen) { if (!quiet || G.t - (G.noPotT || -99) > 15) { G.noPotT = G.t; toast('没有药水了，去杂货铺买吧'); } return; }
+  if (!chosen) { if (!quiet || G.t - (G.noPotT || -99) > 15) { G.noPotT = G.t; toast('没有金创药了，去杂货铺买吧'); } return; }
   take(chosen, 1);
   p.hp = Math.min(st.maxHp, p.hp + ITEMS[chosen].heal);
   floatText(p.x, p.y - 44, '+' + ITEMS[chosen].heal, '#7dff8a', 16);
@@ -1316,7 +1331,7 @@ function useMana(quiet) {
   let chosen = null;
   for (const k of MANA_ORDER) if (has(k) > 0 && ITEMS[k].mana >= missing * 0.7) { chosen = k; break; }
   if (!chosen) for (const k of MANA_ORDER.slice().reverse()) if (has(k) > 0) { chosen = k; break; }
-  if (!chosen) { if (!quiet) toast('没有灵泉了，去杂货铺买吧'); return; }
+  if (!chosen) { if (!quiet || G.t - (G.noMpT || -99) > 15) { G.noMpT = G.t; toast('没有魔法药了，去杂货铺买吧'); } return; }
   take(chosen, 1);
   p.mp = Math.min(st.maxMp, p.mp + ITEMS[chosen].mana);
   floatText(p.x, p.y - 44, '+' + ITEMS[chosen].mana, '#7fc4ff', 16);
@@ -1325,6 +1340,33 @@ function useMana(quiet) {
 }
 
 // 加速饮料：指定 id 就喝那瓶，否则喝效果最强的那瓶
+// 回城卷：直接回苍岚城；随机传送卷：在当前地图里随机换个位置
+function useScroll(k) {
+  const p = G.player, z = ZONES[G.zone];
+  if (G.deadT > 0) return;
+  if (k === 'scroll_town') {
+    if (G.zone === 'village') return toast('已经在城里了');
+    if (has(k) <= 0) return toast('没有回城卷，去杂货铺买（30 金币）');
+    take(k, 1);
+    closePanel();
+    enterZone('village', false, G.zone);
+    toast('📜 回到苍岚城');
+  } else {
+    if (z.safe) return toast('城里不能用随机传送卷');
+    if (has(k) <= 0) return toast('没有随机传送卷，去杂货铺买（40 金币）');
+    take(k, 1);
+    G.fx.push({ k: 'puff', x: p.x, y: p.y, t: 0, life: 0.45, r: 40 });
+    let x, y, tries = 0;
+    do { x = 100 + Math.random() * (z.w - 200); y = 100 + Math.random() * (z.h - 200); tries++; }
+    while (tries < 40 && G.enemies.some((e) => Math.hypot(e.x - x, e.y - y) < 140));
+    p.x = x; p.y = y;
+    if (G.pet) { G.pet.x = x + 30; G.pet.y = y + 10; }
+    G.autoTgt = null;
+    G.fx.push({ k: 'puff', x, y, t: 0, life: 0.45, r: 40 });
+  }
+  markDirty();
+  updateHud();
+}
 function useDrink(id) {
   const now = Date.now();
   const k = id || DRINK_ORDER.find((d) => has(d) > 0);
@@ -1540,14 +1582,14 @@ const PANELS = {
     h += `<div class="desc">💰 金币：<b>${fmt(S.gold)}</b>　材料可以在城里杂货铺卖钱，💎强化石用于铁匠铺强化装备。</div>`;
     if (!keys.length) h += '<div class="empty">背包空空的，去野外打怪吧！</div>';
     else h += '<div class="grid">' + keys.map((k) => `<div class="cell"><span class="n">${fmt(S.inv[k])}</span><span class="ic">${itemIc(k)}</span>${itemName(k)}</div>`).join('') + '</div>';
-    const usable = [...POTION_ORDER, ...MANA_ORDER, ...DRINK_ORDER.slice().reverse()].filter((k) => has(k) > 0);
+    const usable = [...POTION_ORDER, ...MANA_ORDER, 'scroll_town', 'scroll_rand', ...DRINK_ORDER.slice().reverse()].filter((k) => has(k) > 0);
     if (usable.length) {
       h += '<div class="section-t">使用道具</div>';
       for (const k of usable) {
         const I = ITEMS[k];
-        const eff = I.heal ? '回复 ' + I.heal + ' 生命' : I.mana ? '回复 ' + I.mana + ' 灵力' : '移动速度 ×' + I.speed + '，' + I.dur + ' 秒';
+        const eff = I.heal ? '回复 ' + I.heal + ' 生命' : I.mana ? '回复 ' + I.mana + ' 灵力' : I.scroll ? (I.scroll === 'town' ? '立刻回到苍岚城' : '在当前地图随机传送') : '移动速度 ×' + I.speed + '，' + I.dur + ' 秒';
         h += `<div class="row"><div class="ic">${I.ic}</div><div class="info"><b>${I.n} ×${has(k)}</b><small>${eff}</small></div>
-          <div class="acts"><button class="btn green" data-act="${I.heal ? 'drinkhp' : I.mana ? 'drinkmp' : 'drinkspd'}:${k}">使用</button></div></div>`;
+          <div class="acts"><button class="btn green" data-act="${I.heal ? 'drinkhp' : I.mana ? 'drinkmp' : I.scroll ? 'usescroll' : 'drinkspd'}:${k}">使用</button></div></div>`;
       }
     }
     const books = keys.filter((k) => ITEMS[k] && ITEMS[k].book);
@@ -1617,7 +1659,9 @@ const PANELS = {
   quest() { return PANELS.quests(); },
   map() {
     let h = `<div class="desc">野外是大地图；洞穴分好几层，<b style="color:#ffd98a">只能从第一层进，走到最里面（地图最上方）的楼梯才能下到下一层</b>，BOSS 在最底层。越深的图掉的装备越好；Lv10 以上的图有<b style="color:#ff8f80">红名恶徒</b>出没。左上角小地图：白点是你，蓝点回城 / 上楼，黄点下楼，橙点 BOSS。</div>`;
-    h += `<div class="row"><div class="ic">🏡</div><div class="info"><b>苍岚城</b><small>安全区 · 杂货铺、书架、铁匠、任务、家园</small></div><div class="acts">${G.zone === 'village' ? '<button class="btn" disabled>当前</button>' : '<button class="btn green" data-act="go:village">回城</button>'}</div></div>`;
+    h += `<div class="row"><div class="ic">🏡</div><div class="info"><b>苍岚城</b><small>安全区 · 杂货铺、书架、铁匠、任务、家园</small></div><div class="acts">${G.zone === 'village' ? '<button class="btn" disabled>当前</button>' : `<button class="btn green" data-act="go:village" ${has('scroll_town') ? '' : 'disabled'}>📜回城(${has('scroll_town')})</button>`}</div></div>`;
+    const inTown = G.zone === 'village';
+    if (!inTown) h += '<div class="desc">在野外和洞里只能用 📜 回城卷回城（或走到传送阵）。回到城里才能传送到别的地图。</div>';
     for (const zid of ZONE_ORDER) {
       const z = ZONES[zid];
       if (z.prev) continue; // 深层不能直接传送
@@ -1629,7 +1673,7 @@ const PANELS = {
       const bosses = floors.filter((f) => ZONES[f].boss).map((f) => MONS[ZONES[f].boss].n);
       const deep = floors.length > 1 ? (z.g ? `共 ${floors.length} 层` : `深处通往「${last.n}」`) + ' · ' : '';
       h += `<div class="row"><div class="ic">${ok ? z.ic : '🔒'}</div><div class="info"><b>${z.g || z.n}</b><small>Lv.${z.lv}${last.lv > z.lv ? '~' + last.lv : ''} · ${deep}${mons}${bosses.length ? ' · BOSS ' + bosses.join('、') : ''}</small><small>掉落：${GEAR_TIERS[gearTierOf(zid)]}${last !== z && gearTierOf(floors[floors.length - 1]) > gearTierOf(zid) ? '~' + GEAR_TIERS[gearTierOf(floors[floors.length - 1])] : ''}档装备</small></div>
-        <div class="acts">${here ? `<button class="btn" disabled>${G.zone === zid ? '当前' : '在深层'}</button>` : ok ? `<button class="btn primary" data-act="go:${zid}">前往</button>` : `<button class="btn" disabled>Lv.${z.lv}</button>`}</div></div>`;
+        <div class="acts">${here ? `<button class="btn" disabled>${G.zone === zid ? '当前' : '在深层'}</button>` : ok ? (inTown ? `<button class="btn primary" data-act="go:${zid}">前往</button>` : '<button class="btn" disabled>回城后</button>') : `<button class="btn" disabled>Lv.${z.lv}</button>`}</div></div>`;
     }
     return { title: '🗺️ 地图', html: h };
   },
@@ -1676,7 +1720,7 @@ const PANELS = {
           h += `<div class="row" style="opacity:.45"><div class="ic">🔒</div><div class="info"><b>${I.n}</b><small>杂货铺 Lv.${it.shop} 解锁</small></div></div>`;
           continue;
         }
-        const eff = I.heal ? '回复 ' + I.heal + ' 生命 · ' : I.speed ? `移速 ×${I.speed} ${I.dur}秒 · ` : '';
+        const eff = I.heal ? '回复 ' + I.heal + ' 生命 · ' : I.mana ? '回复 ' + I.mana + ' 灵力 · ' : I.scroll ? (I.scroll === 'town' ? '立刻回城 · ' : '本地图随机传送 · ') : I.speed ? `移速 ×${I.speed} ${I.dur}秒 · ` : '';
         h += `<div class="row"><div class="ic">${I.ic}</div><div class="info"><b>${I.n}</b><small>${eff}${it.price} 金币 · 持有 ${has(it.id)}</small></div>
           <div class="acts"><button class="btn" data-act="buy:${it.id}|1" ${S.gold < it.price ? 'disabled' : ''}>×1</button><button class="btn" data-act="buy:${it.id}|10" ${S.gold < it.price * 10 ? 'disabled' : ''}>×10</button></div></div>`;
       }
@@ -1756,11 +1800,18 @@ const PANELS = {
     return { title: '🏡 我的家园', html: h };
   },
   settings() {
+    const o = S.opt;
+    const pick = (k, vals, lab) => vals.map((v) => `<button class="btn ${o[k] === v ? 'primary' : ''}" data-act="opt:${k}|${v}">${v ? lab + v + '%' : '关'}</button>`).join('');
+    const prot = `<div class="section-t">🛡️ 保护（不开挂机也生效）</div>
+      <div class="row"><div class="ic">❤️</div><div class="info"><b>血量低于多少自动喝金创药</b></div></div><div class="acts" style="margin:-4px 0 8px">${pick('autoHp', [0, 30, 50, 70], '')}</div>
+      <div class="row"><div class="ic">💧</div><div class="info"><b>魔法低于多少自动喝魔法药</b></div></div><div class="acts" style="margin:-4px 0 8px">${pick('autoMp', [0, 20, 30, 50], '')}</div>
+      <div class="row"><div class="ic">📜</div><div class="info"><b>血量低于 15% 自动用回城卷</b><small>药喝不过来时保命用</small></div><div class="acts"><button class="btn ${o.autoTown ? 'primary' : ''}" data-act="opt:autoTown">${o.autoTown ? '已开启' : '已关闭'}</button></div></div>`;
     const h = `<div class="row"><div class="ic">📧</div><div class="info"><b>${Auth.email}</b><small>角色：${S.name} · 存档每次变化都会自动上传云端 · 游戏版本 ${VERSION}</small></div></div>
       <button class="btn green big" data-act="savenow">立即保存到云端</button><div style="height:8px"></div>
       <button class="btn big" data-act="fullscreen">全屏模式</button><div style="height:8px"></div>
       <button class="btn red big" data-act="logout">退出登录</button>
-      <div class="desc" style="margin-top:12px">📱 手机：左半屏拖动摇杆移动，⚔️ 按住连续攻击，旁边三个是职业技能（耗灵力），🧪 喝药水，🔹 喝灵泉回灵力，🥤 加速饮料，🤖 挂机（自动找怪、放技能、喝药、捡装备；推摇杆随时接管）。装备掉在地上，走过去就捡。<br>💻 电脑：WASD/方向键 移动，空格 或 C 攻击，F / G / H 技能，Q 或 1 喝药，X 或 3 喝灵泉，R 或 2 加速饮料，Z 挂机，E 交互，B 背包，J 角色，Y 任务，M 地图，O 设置，Esc 关闭窗口。</div>`;
+      ${prot}
+      <div class="desc" style="margin-top:12px">📱 手机：左半屏拖动摇杆移动，⚔️ 按住攻击，上面一排是学会的技能。红瓶 = 金创药（补血），蓝瓶 = 魔法药（补蓝），📜 回城卷，🥤 加速饮料，🤖 挂机。<br>💻 电脑：WASD/方向键 移动，空格 或 C 攻击，F G H T V 技能，<b>1 金创药　2 魔法药　3 回城卷　4 随机传送卷　5 加速饮料</b>（Q / X / R 也能用），Z 挂机，E 交互，B 背包，J 角色，Y 任务，M 地图，O 设置，Esc 关闭窗口。</div>`;
     return { title: '⚙️ 设置', html: h };
   },
 };
@@ -1774,7 +1825,18 @@ const ACTIONS = {
     S.quests[+i] = genQuest();
     markDirty();
   },
-  go(z) { if (!ZONES[z].prev) travel(z); },
+  go(z) {
+    if (z === 'village') return useScroll('scroll_town');
+    if (G.zone !== 'village') return toast('先回城，城里才能传送');
+    if (!ZONES[z].prev) travel(z);
+  },
+  usescroll(k) { useScroll(k); },
+  opt(a) { // 设置里的保护选项，例如 autoHp|50
+    const [k, v] = a.split('|');
+    if (k === 'autoTown') S.opt.autoTown = !S.opt.autoTown;
+    else if (k === 'autoHp' || k === 'autoMp') S.opt[k] = +v;
+    markDirty();
+  },
   tab(arg) {
     const [panel, id] = arg.split('|');
     PTAB[panel] = id;
@@ -1978,6 +2040,7 @@ function updateHud() {
   $('#hGold').textContent = fmt(S.gold);
   $('#potCnt').textContent = POTION_ORDER.reduce((a, k) => a + has(k), 0);
   $('#spdCnt').textContent = DRINK_ORDER.reduce((a, k) => a + has(k), 0);
+  $('#townCnt').textContent = has('scroll_town');
   const left = Math.ceil((S.spd.until - Date.now()) / 1000);
   const bf = $('#hBuff');
   if (left > 0) { bf.classList.remove('hidden'); bf.textContent = `⚡×${S.spd.m} ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`; }
@@ -2050,6 +2113,7 @@ function renderSkillBar() {
 holdBtn($('#btnPotion'), () => !G.paused && usePotion());
 holdBtn($('#btnSpeed'), () => !G.paused && useDrink());
 holdBtn($('#btnMana'), () => !G.paused && useMana());
+holdBtn($('#btnTown'), () => !G.paused && useScroll('scroll_town'));
 holdBtn($('#btnAuto'), () => !G.paused && toggleAuto());
 holdBtn($('#btnInteract'), () => !G.paused && interact());
 document.addEventListener('contextmenu', (e) => e.preventDefault());
@@ -2072,9 +2136,11 @@ addEventListener('keydown', (e) => {
   const si = ['f', 'g', 'h', 't', 'v'].indexOf(k);
   if (si >= 0 && activeSkills()[si]) castSkill(activeSkills()[si].id);
   if (k === 'q' || k === '1') usePotion();
-  if (k === 'x' || k === '3') useMana();
+  if (k === 'x' || k === '2') useMana();
+  if (k === '3' && !e.repeat) useScroll('scroll_town');
+  if (k === '4' && !e.repeat) useScroll('scroll_rand');
   if (k === 'z' && !e.repeat) toggleAuto();
-  if (k === 'r' || k === '2') useDrink();
+  if (k === 'r' || k === '5') useDrink();
   if (k === 'e') interact();
 });
 addEventListener('keyup', (e) => {
@@ -2118,6 +2184,7 @@ function update(dt) {
     autoAtk = !!G.autoTgt;
     if (Math.floor(G.t * 3) !== Math.floor((G.t - dt) * 3)) autoUse(st);
   }
+  if (Math.floor(G.t * 3) !== Math.floor((G.t - dt) * 3)) protect(st);
   p.moving = ml > 0.15;
   if (p.moving) {
     if (ml > 1) { mx /= ml; my /= ml; }
