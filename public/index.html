@@ -9,7 +9,7 @@
 <title>苍岚战纪</title>
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚔️</text></svg>" />
-<link rel="stylesheet" href="style.css?v=20261115d" />
+<link rel="stylesheet" href="style.css?v=20261115e" />
 </head>
 <body>
   <!-- 登录 / 注册 -->
@@ -62,7 +62,7 @@
     <div id="menuBar">
       <button data-open="bag">🎒<span>背包</span><i class="key">B</i></button>
       <button data-open="hero">🧝<span>角色</span><i class="key">J</i></button>
-      <button data-open="quests">📜<span>任务</span><i class="key">Y</i></button>
+      <button data-open="quests">📜<span>任务</span><i class="key">Q</i></button>
       <button data-open="map">🗺️<span>地图</span><i class="key">M</i></button>
       <button data-open="settings">⚙️<span>设置</span><i class="key">O</i></button>
     </div>
@@ -71,11 +71,11 @@
     <div id="controls">
       <button id="btnInteract" class="cbtn interact hidden">交互</button>
       <button id="btnAuto" class="cbtn mini">🤖<span>挂机</span><i class="key">Z</i></button>
-      <button id="btnSpeed" class="cbtn mini">🥤<span id="spdCnt">0</span><i class="key">5</i><b class="lab">速</b></button>
-      <button id="btnMana" class="cbtn mini"><svg class="pot" viewBox="0 0 24 32"><path d="M9 2h6v3h-1v4.5c4 1.4 7 5 7 9.5a9 9 0 0 1-18 0c0-4.5 3-8.1 7-9.5V5H9z" fill="rgba(255,255,255,.18)" stroke="#fff" stroke-width="1.4"/><path d="M5 17.5h14a7 7 0 0 1-14 0z" fill="#2f7bff"/><rect x="8.5" y="1" width="7" height="3" rx="1" fill="#b47a44"/><circle cx="9" cy="19" r="1.6" fill="#b3d4ff"/></svg><span id="manaCnt">0</span><i class="key">2</i><b class="lab">魔</b></button>
-      <button id="btnRand" class="cbtn mini"><svg class="pot" viewBox="0 0 32 32"><circle cx="16" cy="16" r="12" fill="#5b3fa8" stroke="#fff" stroke-width="1.4"/><path d="M16 8a8 8 0 1 1-7.6 5.5M16 12a4 4 0 1 1-3.8 2.8" fill="none" stroke="#d9c8ff" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="16" r="1.6" fill="#fff"/></svg><span id="randCnt">0</span><i class="key">4</i><b class="lab">随</b></button>
-      <button id="btnTown" class="cbtn mini"><svg class="pot" viewBox="0 0 32 28"><rect x="6" y="5" width="20" height="18" rx="2" fill="#f1dfae" stroke="#7a5230" stroke-width="1.4"/><rect x="3" y="3" width="4" height="22" rx="2" fill="#a8743e"/><rect x="25" y="3" width="4" height="22" rx="2" fill="#a8743e"/><path d="M11 10h10M11 14h10M11 18h7" stroke="#7a5230" stroke-width="1.3"/></svg><span id="townCnt">0</span><i class="key">3</i><b class="lab">回</b></button>
-      <button id="btnPotion" class="cbtn mini"><svg class="pot" viewBox="0 0 24 32"><path d="M9 2h6v3h-1v4.5c4 1.4 7 5 7 9.5a9 9 0 0 1-18 0c0-4.5 3-8.1 7-9.5V5H9z" fill="rgba(255,255,255,.18)" stroke="#fff" stroke-width="1.4"/><path d="M5 17.5h14a7 7 0 0 1-14 0z" fill="#e8343a"/><rect x="8.5" y="1" width="7" height="3" rx="1" fill="#b47a44"/><circle cx="9" cy="19" r="1.6" fill="#ffb3b3"/></svg><span id="potCnt">0</span><i class="key">1</i><b class="lab">血</b></button>
+      <button id="btnSpeed" class="cbtn mini">🥤<span id="spdCnt">0</span><i class="key">T</i><b class="lab">速</b></button>
+      <button id="btnMana" class="cbtn mini"><svg class="pot" viewBox="0 0 24 32"><path d="M9 2h6v3h-1v4.5c4 1.4 7 5 7 9.5a9 9 0 0 1-18 0c0-4.5 3-8.1 7-9.5V5H9z" fill="rgba(255,255,255,.18)" stroke="#fff" stroke-width="1.4"/><path d="M5 17.5h14a7 7 0 0 1-14 0z" fill="#2f7bff"/><rect x="8.5" y="1" width="7" height="3" rx="1" fill="#b47a44"/><circle cx="9" cy="19" r="1.6" fill="#b3d4ff"/></svg><span id="manaCnt">0</span><i class="key">F</i><b class="lab">魔</b></button>
+      <button id="btnRand" class="cbtn mini"><svg class="pot" viewBox="0 0 32 32"><circle cx="16" cy="16" r="12" fill="#5b3fa8" stroke="#fff" stroke-width="1.4"/><path d="M16 8a8 8 0 1 1-7.6 5.5M16 12a4 4 0 1 1-3.8 2.8" fill="none" stroke="#d9c8ff" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="16" r="1.6" fill="#fff"/></svg><span id="randCnt">0</span><i class="key">Y</i><b class="lab">随</b></button>
+      <button id="btnTown" class="cbtn mini"><svg class="pot" viewBox="0 0 32 28"><rect x="6" y="5" width="20" height="18" rx="2" fill="#f1dfae" stroke="#7a5230" stroke-width="1.4"/><rect x="3" y="3" width="4" height="22" rx="2" fill="#a8743e"/><rect x="25" y="3" width="4" height="22" rx="2" fill="#a8743e"/><path d="M11 10h10M11 14h10M11 18h7" stroke="#7a5230" stroke-width="1.3"/></svg><span id="townCnt">0</span><i class="key">H</i><b class="lab">回</b></button>
+      <button id="btnPotion" class="cbtn mini"><svg class="pot" viewBox="0 0 24 32"><path d="M9 2h6v3h-1v4.5c4 1.4 7 5 7 9.5a9 9 0 0 1-18 0c0-4.5 3-8.1 7-9.5V5H9z" fill="rgba(255,255,255,.18)" stroke="#fff" stroke-width="1.4"/><path d="M5 17.5h14a7 7 0 0 1-14 0z" fill="#e8343a"/><rect x="8.5" y="1" width="7" height="3" rx="1" fill="#b47a44"/><circle cx="9" cy="19" r="1.6" fill="#ffb3b3"/></svg><span id="potCnt">0</span><i class="key">R</i><b class="lab">血</b></button>
       <button id="btnAttack" class="cbtn attack">⚔️<i class="key">空格</i></button>
     </div>
     <div id="joyBase" class="hidden"><div id="joyKnob"></div></div>
@@ -93,6 +93,6 @@
     </div>
   </div>
 
-  <script src="game.js?v=20261115d"></script>
+  <script src="game.js?v=20261115e"></script>
 </body>
 </html>
