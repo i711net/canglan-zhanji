@@ -6,7 +6,7 @@
    ========================================================= */
 
 const API = '/api';
-const VERSION = '20261115c'; // 每次更新改这里和 index.html 里的 ?v=，手机就会加载新版
+const VERSION = '20261115d'; // 每次更新改这里和 index.html 里的 ?v=，手机就会加载新版
 const $ = (s) => document.querySelector(s);
 const rand = (a, b) => a + Math.random() * (b - a);
 const ri = (a, b) => Math.floor(rand(a, b + 1));
@@ -1895,7 +1895,7 @@ const PANELS = {
       <button class="btn big" data-act="fullscreen">全屏模式</button><div style="height:8px"></div>
       <button class="btn red big" data-act="logout">退出登录</button>
       ${prot}
-      <div class="desc" style="margin-top:12px">📱 手机：左半屏拖动摇杆移动，⚔️ 按住攻击，上面一排是学会的技能。红瓶「血」= 金创药，蓝瓶「魔」= 魔法药，「回」= 回城卷，「随」= 随机传送卷，「速」= 加速饮料，🤖 挂机。<br>💻 电脑：WASD/方向键 移动，空格 或 C 攻击，F G H T V 技能，<b>1 金创药　2 魔法药　3 回城卷　4 随机传送卷　5 加速饮料</b>（Q / X / R 也能用），Z 挂机，E 交互，B 背包，J 角色，Y 任务，M 地图，O 设置，Esc 关闭窗口。</div>`;
+      <div class="desc" style="margin-top:12px">📱 手机：左半屏拖动摇杆移动，⚔️ 按住攻击，上面一排是学会的技能。红瓶「血」= 金创药，蓝瓶「魔」= 魔法药，「回」= 回城卷，「随」= 随机传送卷，「速」= 加速饮料，🤖 挂机。<br>💻 电脑：WASD/方向键 移动，空格 或 C 攻击，F G H T V 6 7 8 技能，<b>1 金创药　2 魔法药　3 回城卷　4 随机传送卷　5 加速饮料</b>（Q / X / R 也能用），Z 挂机，E 交互，B 背包，J 角色，Y 任务，M 地图，O 设置，Esc 关闭窗口。</div>`;
     return { title: '⚙️ 设置', html: h };
   },
 };
@@ -2181,12 +2181,13 @@ function holdBtn(el, down, up) {
 }
 holdBtn($('#btnAttack'), () => (G.atkHeld = true), () => (G.atkHeld = false));
 // 技能栏：学会的主动技能排成一排（最多 5 个），电脑按 F G H T V
-const SK_KEYS = ['F', 'G', 'H', 'T', 'V'];
+// 技能栏：学会的主动技能全部显示，一行 5 个，多了排到上面一行。电脑键：F G H T V，第 6~8 个是 6 7 8
+const SK_KEYS = ['F', 'G', 'H', 'T', 'V', '6', '7', '8'];
 function renderSkillBar() {
   const bar = $('#skillBar');
   bar.innerHTML = '';
   if (!S) return;
-  activeSkills().slice(0, 5).forEach((sk, i) => {
+  activeSkills().slice(0, SK_KEYS.length).forEach((sk, i) => {
     const b = document.createElement('button');
     b.className = 'sbtn';
     b.dataset.id = sk.id;
@@ -2219,7 +2220,7 @@ addEventListener('keydown', (e) => {
   }
   if (G.paused) return;
   if (k === ' ' || k === 'c') G.atkHeld = true;
-  const si = ['f', 'g', 'h', 't', 'v'].indexOf(k);
+  const si = ['f', 'g', 'h', 't', 'v', '6', '7', '8'].indexOf(k);
   if (si >= 0 && activeSkills()[si]) castSkill(activeSkills()[si].id);
   if (k === 'q' || k === '1') usePotion();
   if (k === 'x' || k === '2') useMana();
